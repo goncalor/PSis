@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# Usage: contador palavra ficheiro
+#
+
+l=($@)
+echo ${l[*]}
+if [ "$#" -ne 2 ];then
+   echo "Usage: contador palavra ficheiro"
+   exit 1
+fi
+
+#
+# Este script deve receber uma palavra e um ficheiro e 
+# retornar o numero de vezes que essa palavra aparece no ficheiro.
+#
+# O comando grep com a opcao -o resulta na extracao de todas as
+# palavras palavra do ficheiro.
+#
+
+count=`grep -ow ${l[0]} ${l[1]} | wc -l`
+echo "The word \"${l[0]}\" appears $count times in ${l[1]}"

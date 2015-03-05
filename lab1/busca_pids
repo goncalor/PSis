@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Usage: buscapids programa
+#
+l=($@)
+echo ${l[*]}
+if [ "$#" -ne 1 ];then
+   echo "Usage: buscapids programa"
+   exit 1
+fi
+
+#
+# Este script deve receber o nome de um programa e
+# retornar os pids de todos os processos desse programa.
+#
+# O comando ps com a opcao -e devolve a listagem de todos os processos.
+
+ids=`ps -e | grep -i $l | awk '{print $1}'`
+array=($ids)
+for id in "${array[@]}"
+do
+	echo $id
+done
