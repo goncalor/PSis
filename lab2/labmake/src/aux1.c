@@ -1,5 +1,5 @@
 #include <time.h>
-#include <math.h>
+#include <stdlib.h>
 
 void fazcontas(struct tm *local) {
 

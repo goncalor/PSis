@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <time.h>
+#include "aux1.h"
+#include "aux2.h"
 
 main() {
 	/* Funcoes/estruturas do time */
