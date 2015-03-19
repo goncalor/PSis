@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <time.h>
+#include "aux1.h"
+#include "aux2.h"
 
-main() {
+int main() {
 	/* Funcoes/estruturas do time */
 	time_t now;
 	struct tm *local;
@@ -11,4 +13,6 @@ main() {
 	/* Definidos nos aux?.c */
 	fazcontas2(local);
 	imprime2(local);
+
+	return 0;
 }
