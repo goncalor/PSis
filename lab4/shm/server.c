@@ -8,7 +8,7 @@
 #include "heartbeat.h"
 
 int main(int argc, char * argv[]){
-	int task_id, fd_mem;
+	int task_id, fd_mem, dead_count, times_dead=0;
 	shm *shm_addr;
 
 	fd_mem = shm_open("/heartbeat", O_RDWR | O_CREAT, 0600);
@@ -25,7 +25,8 @@ int main(int argc, char * argv[]){
 
 	while(1)
 	{
-		for(task_id = 0; task_id <= MAX_TASKS; task_id++)
+		dead_count = 0;
+		for(task_id = 0; task_id < MAX_TASKS; task_id++)
 		{
 			printf("Checking task %d... ", task_id);
 
@@ -35,9 +36,25 @@ int main(int argc, char * argv[]){
 				shm_addr->task[task_id] -= 1;
 			}
 			else
+			{
 				puts("dead.");
+				dead_count++;
+			}
 		}
 		puts("");
+		if(dead_count == MAX_TASKS)
+		{
+			puts("All tasks are dead.\n\n");
+			times_dead++;
+			if(times_dead == 4)
+			{
+				puts("EXITING NOW!!!\nBYE BYE NIGAAAA.\n\n");
+				return EXIT_SUCCESS;
+			}
+		}
+		else
+			times_dead = 0;
+
 		sleep(TICK_TIME);
 	}
 

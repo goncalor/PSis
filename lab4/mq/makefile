@@ -10,13 +10,13 @@ vpath % bin
 all: server task
 
 server: server.o
-		$(CC) $(CFLAGS) $(addprefix obj/, $^) -o bin/$@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(addprefix obj/, $^) -o bin/$@ $(LDFLAGS)
 
 task: task.o
-		$(CC) $(CFLAGS) $(addprefix obj/, $^) -o bin/$@ $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(addprefix obj/, $^) -o bin/$@ $(LDFLAGS) 
 
 %.o: %.c
-		$(CC) $(CFLAGS) -Iinclude -c $< -o obj/$@ $(LDFLAGS)
+	$(CC) $(CFLAGS) -Iinclude -c $< -o obj/$@ $(LDFLAGS)
 
 server.o: heartbeat.h
 
