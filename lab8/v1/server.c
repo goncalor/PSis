@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-	int i = 0;
+int i = 0;
 
 void * thread_code(void *arg){
 	int value = *((int *)arg);
