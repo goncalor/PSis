@@ -91,18 +91,18 @@ int main(int argc, char **argv)
 		/* start thread to send heartbeats */
 
 		pthread_create(&thread_send_beat, NULL, send_beat, &mq);
-		printf("New thread %d\n", (int) thread_send_beat);
+		printf("New thread %lu\n", thread_send_beat);
 	}
 
 	/* server tasks */
 
 	arg_1 = 1;
 	pthread_create(&thread_id_1, NULL, thread_code, &arg_1);
-	printf("New thread %d\n", (int) thread_id_1);
+	printf("New thread %lu\n", thread_id_1);
 
 	arg_2 = 2;	
 	pthread_create(&thread_id_2, NULL, thread_code, &arg_2);
-	printf("New thread %d\n", (int) thread_id_2);
+	printf("New thread %lu\n", thread_id_2);
 
 	getchar();
 
