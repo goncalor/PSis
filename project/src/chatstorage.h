@@ -4,7 +4,7 @@
 typedef struct chatdb chatdb;
 
 chatdb * CSinit(void);
-void CSstore(chatdb *db, char *message);
+int CSstore(chatdb *db, char *message);
 char ** CSquery(chatdb *db, unsigned first, unsigned last);
 
 #endif
