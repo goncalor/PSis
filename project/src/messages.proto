@@ -1,0 +1,26 @@
+
+message ClientToServer
+{
+	enum Type {
+		LOGIN = 0;
+		DISC = 1;
+		CHAT = 2;
+		QUERY = 3;
+	}
+
+	required Type type = 1;	// identify type of message
+	optional string str = 2;	// used for LOGIN (username) and CHAR (string)
+	optional uint64 id_min = 3;	// used for QUERY
+	optional uint64 id_max = 4;
+}
+
+message ServerToClient
+{
+	enum Code {
+		OK = 0;
+		NOK = 1;
+	}
+
+	optional Code code = 1;	// used for LOGIN only
+	repeated string str = 2;	// used for QUERY only
+}

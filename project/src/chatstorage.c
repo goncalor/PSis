@@ -42,7 +42,6 @@ int CSstore(chatdb *db, char *message)
 {
 	if(db->nr_messages == db->max_messages)
 	{
-		// verify realloc errors
 		db->max_messages = db->max_messages + CS_STEP;
 		db->messages = realloc(db->messages, db->max_messages*sizeof(char *));
 		if(db->messages == NULL)
