@@ -3,6 +3,7 @@
 #include "define.h"
 #include "TCPlib.h"
 #include "chatstorage.h"
+#include "threads.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -11,9 +12,8 @@
 #include <string.h>
 #include <sys/select.h>
 #include <errno.h>
+#include <pthread.h>
 
-#define BUF_LEN 1024
-#define COMM_LEN 40
 #define LISTEN_MAX 16
 
 int main(int argc, char **argv)
@@ -69,6 +69,12 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	// create thread to manage keyboard
+	pthread_t thread_keyboad;
+	pthread_create(&thread_keyboad, NULL, read_commands, NULL);
+
+	pthread_join(thread_keyboad, NULL);	// wait for thread_keyboad termination
 
 	exit(EXIT_SUCCESS);
 }
+
