@@ -1,12 +1,20 @@
 TARGET = server
+CLIENT = client
 CC = gcc
 CFLAGS = -Wall 
-DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h
-OBJ = $(TARGET).o TCPlib.o utils.o inetutils.o chatstorage.o
+DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h messages.pb-c.h
+OBJ = $(TARGET).o TCPlib.o utils.o inetutils.o chatstorage.o messages.pb-c.o
 EDITOR = gedit
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@
+.PHONY: all
+
+all: $(TARGET) $(CLIENT)
+
+$(TARGET): $(DEPS) $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ -l protobuf-c
+
+$(CLIENT): $(CLIENT).o
+	$(CC) $(CFLAGS) $^ -o $@ -l protobuf-c
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
