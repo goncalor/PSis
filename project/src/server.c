@@ -4,6 +4,7 @@
 #include "TCPlib.h"
 #include "chatstorage.h"
 #include "threads.h"
+#include "fifo.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -13,6 +14,9 @@
 #include <sys/select.h>
 #include <errno.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 #define LISTEN_MAX 16
 
@@ -68,6 +72,37 @@ int main(int argc, char **argv)
 		perror("failed to listen()");
 		exit(EXIT_FAILURE);
 	}
+
+	/* create FIFOs */
+	char fifo_name_server[strlen(FIFO_NAME_SERVER)+8];
+	char fifo_name_relauncher[strlen(FIFO_NAME_RELAUNCHER)+8];
+
+	sprintf(fifo_name_server, "%s-%d", FIFO_NAME_SERVER, (int) getpid());
+	sprintf(fifo_name_relauncher, "%s-%d", FIFO_NAME_RELAUNCHER, (int) getpid());
+
+	if(mkfifo(FIFO_NAME_SERVER, 0600) == -1)	// open for reading and writing so that it does not block
+	{
+		perror("create fifo server");
+		exit(EXIT_FAILURE);
+	}
+
+	if(mkfifo(FIFO_NAME_RELAUNCHER, 0600) == -1)	// open for reading and writing so that it does not block
+	{
+		perror("create fifo relauncher");
+		exit(EXIT_FAILURE);
+	}
+
+
+	/* create server and relauncher */
+	if(fork() == 0)
+	{
+		//server(getpid());
+	}
+	else
+	{
+		//relauncher(getpid());
+	}
+
 
 	// create thread to manage keyboard
 	pthread_t thread_keyboad;

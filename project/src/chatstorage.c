@@ -24,7 +24,7 @@ chatdb * CSinit(void)
 	}
 
 	new->nr_messages = 0;
-	new->nr_messages = CS_STEP;
+	new->max_messages = CS_STEP;
 	new->messages = malloc(CS_STEP*sizeof(char *));
 	if(new->messages == NULL)
 	{
@@ -104,4 +104,9 @@ char ** CSquery(chatdb *db, unsigned first, unsigned last)
 	}
 
 	return chunk;
+}
+
+void CSdestroy(chatdb *db)
+{
+	// frees
 }
