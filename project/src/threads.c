@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <unistd.h>
+
 #define SERVER_COMM_LEN 10
 
 // read input from keyboard
@@ -11,21 +13,28 @@ void * read_commands()
 
 	while(1)
 	{
-		fgets(comm, SERVER_COMM_LEN, stdin);
-		comm[strlen(comm)-1] = 0;	// remove \n
-
-		if(strcmp(comm, "QUIT") == 0)
+		if(fgets(comm, SERVER_COMM_LEN, stdin)==NULL)
 		{
-			puts("Exiting...");
-			exit(EXIT_SUCCESS);
-		}
-		else if(strcmp(comm, "LOG") == 0)
-		{
-			puts("Log:");
+			puts("fgets failed");
+			sleep(2);
 		}
 		else
 		{
-			printf("Invalid command '%s'.\n", comm);
+			comm[strlen(comm)-1] = 0;	// remove \n
+
+			if(strcmp(comm, "QUIT") == 0)
+			{
+				puts("Exiting...");
+				exit(EXIT_SUCCESS);
+			}
+			else if(strcmp(comm, "LOG") == 0)
+			{
+				puts("Log:");
+			}
+			else
+			{
+				printf("Invalid command '%s'.\n", comm);
+			}
 		}
 	}
 }
