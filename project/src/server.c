@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 
 
 #define LISTEN_MAX 16
@@ -106,6 +107,8 @@ int main(int argc, char **argv)
 	strcpy(relauncher_msg.fifo_write, fifo_name_relauncher);
 	relauncher_msg.func = server;
 
+	signal(SIGPIPE, SIG_IGN);
+
 	/* create server and relauncher */
 	if(fork() == 0)
 	{
@@ -145,7 +148,7 @@ void * rcv_fifo(void * msg)
 
 	strcpy(fifo_child.fifo_read, msg_fifo->fifo_write);
 	strcpy(fifo_child.fifo_write, msg_fifo->fifo_read);
-	printf("send %lu receive %lu\n", fifo_child.func, msg_fifo->func);
+	printf("send %lu receive %lu\n", (unsigned long) fifo_child.func, (unsigned long) msg_fifo->func);
 
 	while(1)
 	{
@@ -158,7 +161,7 @@ void * rcv_fifo(void * msg)
 		{
 			if(fork() == 0)
 			{
-				printf("%lu\n",fifo_child.func);
+				printf("%lu\n", (unsigned long) fifo_child.func);
 				msg_fifo->func(&fifo_child);
 			}
 		}
@@ -194,7 +197,7 @@ void server(fifo_msg *msg_fifo)
 {
 	// create thread to manage keyboard
 
-	printf("server %s %s %lu\n", msg_fifo->fifo_write, msg_fifo->fifo_read, msg_fifo->func);
+	printf("server %s %s %lu\n", msg_fifo->fifo_write, msg_fifo->fifo_read, (unsigned long) msg_fifo->func);
 
 	pthread_t thread_keyboad;
 	pthread_create(&thread_keyboad, NULL, read_commands, NULL);
@@ -214,7 +217,7 @@ void server(fifo_msg *msg_fifo)
 
 void relauncher(fifo_msg *msg_fifo)
 {
-	printf("relauncher %s %s %lu\n", msg_fifo->fifo_write, msg_fifo->fifo_read, msg_fifo->func);
+	printf("relauncher %s %s %lu\n", msg_fifo->fifo_write, msg_fifo->fifo_read, (unsigned long) msg_fifo->func);
 
 	pthread_t thread_send_fifo;
 	pthread_create(&thread_send_fifo, NULL, send_fifo, msg_fifo->fifo_write);
@@ -226,7 +229,6 @@ void relauncher(fifo_msg *msg_fifo)
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
 }
-
 
 
 
