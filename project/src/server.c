@@ -99,15 +99,17 @@ int main(int argc, char **argv)
 
 	fifo_msg server_msg, relauncher_msg;
 
+	// reads from relauncher. writes to server. launches relauncher
 	strcpy(server_msg.fifo_read, fifo_name_relauncher);
 	strcpy(server_msg.fifo_write, fifo_name_server);
 	server_msg.func = relauncher;
 
+	// reads from server. writes to relauncher. launchers server
 	strcpy(relauncher_msg.fifo_read, fifo_name_server);
 	strcpy(relauncher_msg.fifo_write, fifo_name_relauncher);
 	relauncher_msg.func = server;
 
-	signal(SIGPIPE, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);	// needed so that there is no program termination when write() tries to write to a broken pipe
 
 	/* create server and relauncher */
 	if(fork() == 0)
@@ -141,18 +143,20 @@ void * rcv_fifo(void * msg)
 
 	fifo_msg fifo_child;
 
+	strcpy(fifo_child.fifo_read, msg_fifo->fifo_write);
+	strcpy(fifo_child.fifo_write, msg_fifo->fifo_read);
 	if(msg_fifo->func == server)
 		fifo_child.func = relauncher;
 	else
 		fifo_child.func = server;
 
-	strcpy(fifo_child.fifo_read, msg_fifo->fifo_write);
-	strcpy(fifo_child.fifo_write, msg_fifo->fifo_read);
-	printf("send %lu receive %lu\n", (unsigned long) fifo_child.func, (unsigned long) msg_fifo->func);
+	printf("init execute %lu send %lu\n", (unsigned long) msg_fifo->func, (unsigned long) fifo_child.func);
 
 	while(1)
 	{
+		printf("read fd %d\n", (int) fd);
 		retval = read(fd, &buf, sizeof(buf));
+		printf("read %d\n", (int) retval);
 		if(retval == -1)
 		{
 			perror("read from server fifo");
@@ -161,8 +165,9 @@ void * rcv_fifo(void * msg)
 		{
 			if(fork() == 0)
 			{
-				printf("%lu\n", (unsigned long) fifo_child.func);
+				printf("execute %lu send %lu\n", (unsigned long) msg_fifo->func, (unsigned long) fifo_child.func);
 				msg_fifo->func(&fifo_child);
+				puts("I am in fork after the call to server/relauncher");
 			}
 		}
 
@@ -175,6 +180,7 @@ void * send_fifo(void * fifo_name)
 {
 	int fd;
 	char buf;
+	ssize_t retval;
 
 	puts(fifo_name);
 	fd = open((char*) fifo_name, O_WRONLY);
@@ -186,7 +192,9 @@ void * send_fifo(void * fifo_name)
 
 	while(1)
 	{
-		if(write(fd, &buf, sizeof(buf)) == -1)
+		retval = write(fd, &buf, sizeof(buf));
+		printf("write %d\n", (int) retval);
+		if(retval == -1)
 			perror("write to server fifo");
 		sleep(TIMEOUT/2);
 	}
@@ -199,9 +207,11 @@ void server(fifo_msg *msg_fifo)
 
 	printf("server %s %s %lu\n", msg_fifo->fifo_write, msg_fifo->fifo_read, (unsigned long) msg_fifo->func);
 
+	// keyboard management theread
 	pthread_t thread_keyboad;
 	pthread_create(&thread_keyboad, NULL, read_commands, NULL);
 
+	// crash recovery thereads
 	pthread_t thread_send_fifo;
 	pthread_create(&thread_send_fifo, NULL, send_fifo, msg_fifo->fifo_write);
 
@@ -209,9 +219,11 @@ void server(fifo_msg *msg_fifo)
 	pthread_create(&thread_rcv_fifo, NULL, rcv_fifo, msg_fifo);
 
 	/* thread joins */
+	sleep(10000);
 	pthread_join(thread_keyboad, NULL);	// wait for thread_keyboad termination
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
+puts("server function ended");
 }
 
 
@@ -219,6 +231,7 @@ void relauncher(fifo_msg *msg_fifo)
 {
 	printf("relauncher %s %s %lu\n", msg_fifo->fifo_write, msg_fifo->fifo_read, (unsigned long) msg_fifo->func);
 
+	// crash recovery thereads
 	pthread_t thread_send_fifo;
 	pthread_create(&thread_send_fifo, NULL, send_fifo, msg_fifo->fifo_write);
 
@@ -226,8 +239,10 @@ void relauncher(fifo_msg *msg_fifo)
 	pthread_create(&thread_rcv_fifo, NULL, rcv_fifo, msg_fifo);
 
 	/* thread joins */
+	sleep(10000);
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
+puts("relauncher function ended");
 }
 
 

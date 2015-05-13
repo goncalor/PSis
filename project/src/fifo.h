@@ -8,7 +8,7 @@ typedef struct fifo_msg {
 } fifo_msg;
 
 #define FIFO_BUF 3
-#define TIMEOUT 9
+#define TIMEOUT 10
 #define FIFO_NAME_SERVER "/tmp/psis-from-server"
 #define FIFO_NAME_RELAUNCHER "/tmp/psis-from-relauncher"
 
