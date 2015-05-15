@@ -3,4 +3,6 @@
 
 #define DEBUG
 
+int TCPfd;
+
 #endif

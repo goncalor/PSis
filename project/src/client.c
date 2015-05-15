@@ -1,3 +1,7 @@
+#include "messages.pb-c.h"
+#include "TCPlib.h"
+#include "inetutils.h"
+#include "define.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,8 +23,17 @@ int main()
 
 	short is_logged = 0;
 
+	ClientToServer msg = CLIENT_TO_SERVER__INIT;
+	uint8_t *buf;
+
 	should_exit= 0;
 
+	int TCPfd = TCPconnect(atoh("127.0.0.1"), 3000);
+	if(TCPfd < 0)
+	{
+		puts("Failded to create socket or connect()");
+		exit(EXIT_FAILURE);
+	}
 
 
 	while(! should_exit)
@@ -41,7 +54,18 @@ int main()
 					{
 						is_logged = 1;
 
+						msg.type = CLIENT_TO_SERVER__TYPE__LOGIN;
+						msg.str = cmd_str_arg;
+						//msg.has_id_min = 0;
+						//msg.has_id_max = 0;
+
+						buf = malloc(client_to_server__get_packed_size(&msg));
+						client_to_server__pack(&msg, buf);
+
 						printf("Sending LOGIN command (%s)\n", cmd_str_arg);
+
+						if(TCPsend(TCPfd, (char*) buf, client_to_server__get_packed_size(&msg)) == -1)
+							puts("Failed to send message");
 					}
 
 				}

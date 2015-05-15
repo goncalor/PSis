@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 
 	/* create a socket and listen */
-	int TCPfd;
+	//int TCPfd;
 
 	TCPfd = TCPcreate(INADDR_ANY, port);
 	if(TCPfd < 0)

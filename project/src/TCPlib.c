@@ -106,3 +106,19 @@ int TCPcreate(unsigned long IP, unsigned short port)
 
 	return fd;
 }
+
+/* accepts an incoming connection on the listening port associated to fd. in case of success returns the fd associated to the incoming connection. returns -1 otherwise */
+int TCPaccept(int fd)
+{
+	int fd_accept;
+	struct sockaddr address;
+	socklen_t addrlen = sizeof(address);
+
+	fd_accept = accept(fd, &address, &addrlen);
+	if(fd_accept == -1)
+	{
+		return -1;
+	}
+
+	return fd_accept;
+}
