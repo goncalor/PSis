@@ -1,5 +1,4 @@
 #include "crashrecovery.h"
-#include "threads.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -10,23 +9,21 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-void server(void)
+void relauncher(void)
 {
-	// keyboard management theread
-	pthread_t thread_keyboad;
-	pthread_create(&thread_keyboad, NULL, read_commands, NULL);
 
 	// crash recovery thereads
 	pthread_t thread_send_fifo;
-	pthread_create(&thread_send_fifo, NULL, CRserver_write, NULL);
+	pthread_create(&thread_send_fifo, NULL, CRrelauncher_write, NULL);
 
 	pthread_t thread_rcv_fifo;
-	pthread_create(&thread_rcv_fifo, NULL, CRserver_read, NULL);
+	pthread_create(&thread_rcv_fifo, NULL, CRrelauncher_read, NULL);
 
 	/* thread joins */
 	sleep(10000);
-	pthread_join(thread_keyboad, NULL);	// wait for thread_keyboad termination
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
-	puts("server function ended");
+	puts("relauncher function ended");
 }
+
+
