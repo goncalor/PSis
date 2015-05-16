@@ -62,16 +62,14 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 
 	/* create a socket and listen */
-	//int TCPfd;
-
-	TCPfd = TCPcreate(INADDR_ANY, port);
-	if(TCPfd < 0)
+	TCPfd_global = TCPcreate(INADDR_ANY, port);
+	if(TCPfd_global < 0)
 	{
 		puts("failed to create listening socket");
 		exit(EXIT_FAILURE);
 	}
 
-	if(listen(TCPfd, LISTEN_MAX) == -1)
+	if(listen(TCPfd_global, LISTEN_MAX) == -1)
 	{
 		perror("failed to listen()");
 		exit(EXIT_FAILURE);

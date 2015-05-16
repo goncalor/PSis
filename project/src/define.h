@@ -3,6 +3,8 @@
 
 #define DEBUG
 
-int TCPfd;
+int TCPfd_global;
+
+enum boolean {false, true};
 
 #endif

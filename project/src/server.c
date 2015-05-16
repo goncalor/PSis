@@ -5,6 +5,7 @@
 #include "define.h"
 #include "messages.pb-c.h"
 #include "protobufutils.h"
+#include "server.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -20,9 +21,7 @@
 
 void server(void)
 {
-	int newfd;
-	int len_received;
-	char *buf;
+	int *newfd;
 
 	// keyboard management theread
 	pthread_t thread_keyboad;
@@ -38,26 +37,20 @@ void server(void)
 	while(1)
 	{
 		// accepts 
-		newfd = TCPaccept(TCPfd);
-		if(newfd < 0)
+		newfd = malloc(sizeof(int));
+		if(newfd == NULL)
+		{
+			perror("allocation for an incoming connection file descriptor");
+			exit(EXIT_FAILURE);
+		}
+		*newfd = TCPaccept(TCPfd_global);
+		if(*newfd < 0)
 		{
 			puts("TCPaccept() failed");
 		}
 
-
-		ClientToServer *msg;
-		len_received = PROTOrecv(newfd, &buf);
-		if(len_received < 0)
-		{
-			puts("PROTOrecv() failed");
-		}
-
-		msg = client_to_server__unpack(NULL, len_received, (uint8_t*) buf);
-
-		printf("%s\n", msg->str);
-
-		client_to_server__free_unpacked(msg, NULL);
-		free(buf);
+		pthread_t thread_incoming_connection;
+		pthread_create(&thread_incoming_connection, NULL, incoming_connection, newfd);
 	}
 
 
@@ -67,4 +60,46 @@ void server(void)
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
 	puts("server function ended");
+}
+
+
+void * incoming_connection(void *arg)
+{
+	char *buf;
+	int len_received, fd = *(int*)arg;
+	ClientToServer *msg;
+
+	len_received = PROTOrecv(fd, &buf);
+	if(len_received < 0)
+	{
+		puts("PROTOrecv() failed");
+		pthread_exit(NULL);
+	}
+
+	msg = client_to_server__unpack(NULL, len_received, (uint8_t*) buf);
+
+	switch(msg->type)
+	{
+		case CLIENT_TO_SERVER__TYPE__LOGIN:
+			puts("event login");
+			break;
+		case CLIENT_TO_SERVER__TYPE__DISC:
+			puts("event disc");
+			break;
+		case CLIENT_TO_SERVER__TYPE__CHAT:
+			puts("event chat");
+			break;
+		case CLIENT_TO_SERVER__TYPE__QUERY:
+			puts("event query");
+			break;
+		default:
+			puts("event error");
+	}
+
+	printf("%s\n", msg->str);
+
+	client_to_server__free_unpacked(msg, NULL);
+	free(buf);
+
+	pthread_exit(NULL);
 }

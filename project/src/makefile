@@ -6,9 +6,9 @@ DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h threads.h crashrecove
 OBJ = $(TARGET).o TCPlib.o utils.o inetutils.o chatstorage.o threads.o crashrecovery.o main.o server.o relauncher.o protobufutils.o messages.pb-c.o
 EDITOR = gedit
 
-.PHONY: all proto
+.PHONY: all
 
-all: proto $(TARGET) $(CLIENT)
+all: $(TARGET) $(CLIENT)
 
 $(TARGET): $(DEPS) $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lprotobuf-c -lpthread
@@ -19,8 +19,7 @@ $(CLIENT): $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-proto:
-	$(RM) messages.pb-c.[ohc]
+messages.pb-c.c:
 	protoc-c messages.proto --c_out=.
 
 .PHONY: clean o

@@ -3,9 +3,11 @@
 #include "inetutils.h"
 #include "define.h"
 #include "protobufutils.h"
+#include "client.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 
 #define LOGIN_STR "LOGIN"	// username 
 #define DISC_STR "DISC"
@@ -13,23 +15,38 @@
 #define QUERY_STR "QUERY"	// id_min id_max
 #define EXIT_STR "QUIT"
 
-
-int main()
+int main(int argc, char **argv)
 {
-	int should_exit;
 	char line[100];
 	char command[100];
 	char cmd_str_arg[100];
-	int  cmd_int_arg1, cmd_int_arg2;
+	short should_exit = 0, is_logged = 0;
+	unsigned cmd_int_arg1, cmd_int_arg2;
+	unsigned ip = atoh("127.0.0.1");
+	unsigned short port = 3000;
 
-	short is_logged = 0;
+/*-------- check arguments --------*/
 
-	ClientToServer msg = CLIENT_TO_SERVER__INIT;
-	uint8_t *buf;
+	int opt;
 
-	should_exit= 0;
+	while((opt=getopt(argc, argv, "p:i:"))!=-1) /*getopt() returns one arg at a time. sets optarg*/
+	{
+		switch(opt)
+		{
+			case 'p': port = atoi(optarg); break;
+			case 'i': ip = atoh(optarg); break;
+			case '?': usage(argv[0]); exit(EXIT_SUCCESS);
+		}
+	}
 
-	int TCPfd = TCPconnect(atoh("127.0.0.1"), 3000);
+	#ifdef DEBUG
+	printf("ip: 0x%x\n", ip);
+	printf("port: %hu\n", port);
+	#endif
+
+/*-------- END check arguments --------*/
+
+	int TCPfd = TCPconnect(ip, port);
 	if(TCPfd < 0)
 	{
 		perror("Failed to create socket or connect()");
@@ -53,22 +70,8 @@ int main()
 					}
 					else
 					{
-						is_logged = 1;
-
-						msg.type = CLIENT_TO_SERVER__TYPE__LOGIN;
-						msg.str = cmd_str_arg;
-						//msg.has_id_min = 0;
-						//msg.has_id_max = 0;
-
-						buf = malloc(client_to_server__get_packed_size(&msg));
-						client_to_server__pack(&msg, buf);
-
-						printf("Sending LOGIN command (%s)\n", cmd_str_arg);
-
-						if(PROTOsend(TCPfd, (char*) buf, client_to_server__get_packed_size(&msg)) != 0)
-							puts("Failed to send message");
+						is_logged = login(TCPfd, cmd_str_arg);
 					}
-
 				}
 				else
 				{
@@ -128,3 +131,42 @@ int main()
 
 	exit(0);
 }
+
+
+int login(int fd, char *username)
+{
+	ClientToServer msg = CLIENT_TO_SERVER__INIT;
+	uint8_t *buf;
+
+	msg.type = CLIENT_TO_SERVER__TYPE__LOGIN;
+	msg.str = username;
+	//msg.has_id_min = 0;
+	//msg.has_id_max = 0;
+
+	buf = malloc(client_to_server__get_packed_size(&msg));
+	printf("%d\n", client_to_server__get_packed_size(&msg));
+	if(buf == NULL)
+	{
+		perror("malloc in login()");
+		exit(EXIT_FAILURE);
+	}
+	client_to_server__pack(&msg, buf);
+
+	printf("Sending LOGIN command (%s)\n", username);
+
+	if(PROTOsend(fd, (char*) buf, client_to_server__get_packed_size(&msg)) != 0)
+	{
+		puts("Failed to send message");
+		return false;
+	}
+
+	return true;
+}
+
+
+void usage(char *exename)
+{
+	printf("Usage: %s [-i ip] [-p port]\n", exename);
+	putchar('\n');
+}
+
