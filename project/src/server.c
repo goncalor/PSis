@@ -4,6 +4,7 @@
 #include "define.h"
 #include "define.h"
 #include "messages.pb-c.h"
+#include "protobufutils.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -20,7 +21,8 @@
 void server(void)
 {
 	int newfd;
-	char buf[BUF_LEN];
+	int len_received;
+	char *buf;
 
 	// keyboard management theread
 	pthread_t thread_keyboad;
@@ -32,20 +34,31 @@ void server(void)
 
 	pthread_t thread_rcv_fifo;
 	pthread_create(&thread_rcv_fifo, NULL, CRserver_read, NULL);
-	
-	// accepts 
-	newfd = TCPaccept(TCPfd);
 
-	memset(&buf, 0, BUF_LEN);
-	TCPrecv(newfd, (char*)&buf, BUF_LEN);
+	while(1)
+	{
+		// accepts 
+		newfd = TCPaccept(TCPfd);
+		if(newfd < 0)
+		{
+			puts("TCPaccept() failed");
+		}
 
 
-	ClientToServer *msg;
-	msg = client_to_server__unpack(NULL, BUF_LEN, (uint8_t*) &buf);
+		ClientToServer *msg;
+		len_received = PROTOrecv(newfd, &buf);
+		if(len_received < 0)
+		{
+			puts("PROTOrecv() failed");
+		}
 
-	printf("%s\n", msg->str);
+		msg = client_to_server__unpack(NULL, len_received, (uint8_t*) buf);
 
-	client_to_server__free_unpacked(msg, NULL);
+		printf("%s\n", msg->str);
+
+		client_to_server__free_unpacked(msg, NULL);
+		free(buf);
+	}
 
 
 	/* thread joins */

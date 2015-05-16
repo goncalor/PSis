@@ -2,6 +2,7 @@
 #include "TCPlib.h"
 #include "inetutils.h"
 #include "define.h"
+#include "protobufutils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +32,7 @@ int main()
 	int TCPfd = TCPconnect(atoh("127.0.0.1"), 3000);
 	if(TCPfd < 0)
 	{
-		puts("Failded to create socket or connect()");
+		perror("Failed to create socket or connect()");
 		exit(EXIT_FAILURE);
 	}
 
@@ -64,7 +65,7 @@ int main()
 
 						printf("Sending LOGIN command (%s)\n", cmd_str_arg);
 
-						if(TCPsend(TCPfd, (char*) buf, client_to_server__get_packed_size(&msg)) == -1)
+						if(PROTOsend(TCPfd, (char*) buf, client_to_server__get_packed_size(&msg)) != 0)
 							puts("Failed to send message");
 					}
 
