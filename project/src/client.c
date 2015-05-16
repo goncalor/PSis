@@ -144,7 +144,6 @@ int login(int fd, char *username)
 	//msg.has_id_max = 0;
 
 	buf = malloc(client_to_server__get_packed_size(&msg));
-	printf("%d\n", client_to_server__get_packed_size(&msg));
 	if(buf == NULL)
 	{
 		perror("malloc in login()");

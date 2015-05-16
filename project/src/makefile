@@ -2,7 +2,7 @@ TARGET = server
 CLIENT = client
 CC = gcc
 CFLAGS = -Wall 
-DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h threads.h crashrecovery.h server.h relauncher.h protobufutils.h # messages.pb-c.h 
+DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h threads.h crashrecovery.h server.h relauncher.h protobufutils.h messages.pb-c.h 
 OBJ = $(TARGET).o TCPlib.o utils.o inetutils.o chatstorage.o threads.o crashrecovery.o main.o server.o relauncher.o protobufutils.o messages.pb-c.o
 EDITOR = gedit
 
@@ -21,6 +21,10 @@ $(CLIENT): $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o
 
 messages.pb-c.c:
 	protoc-c messages.proto --c_out=.
+
+messages.pb-c.h:
+	protoc-c messages.proto --c_out=.
+
 
 .PHONY: clean o
 
