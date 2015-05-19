@@ -77,6 +77,7 @@ void * incoming_connection(void *arg)
 		if(len_received < 0)
 		{
 			puts("PROTOrecv() failed");
+			TCPclose(fd);
 			pthread_exit(NULL);
 		}
 
@@ -90,11 +91,8 @@ void * incoming_connection(void *arg)
 				break;
 			case CLIENT_TO_SERVER__TYPE__DISC:
 				puts("event disc");
-				disc = false;
-				if(loggedin)
-				{
-					// remove name, fd, etc
-				}
+				disc = true;
+				void manage_disconnect(int fd, int loggedin);
 				break;
 			case CLIENT_TO_SERVER__TYPE__CHAT:
 				puts("event chat");
@@ -114,7 +112,7 @@ void * incoming_connection(void *arg)
 				puts("event error");
 		}
 
-		printf("%s\n", msg->str);
+		//printf("%s\n", msg->str);
 
 		client_to_server__free_unpacked(msg, NULL);
 		free(buf);
@@ -167,4 +165,15 @@ int manage_login(int fd, int loggedin)
 	free(buf);
 
 	return loggedin;
+}
+
+
+void manage_disconnect(int fd, int loggedin)
+{
+	if(loggedin)
+	{
+		// remove name, fd, etc
+	}
+
+	TCPclose(fd);
 }

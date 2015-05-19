@@ -46,13 +46,7 @@ int main(int argc, char **argv)
 
 /*-------- END check arguments --------*/
 
-	int TCPfd = TCPconnect(ip, port);
-	if(TCPfd < 0)
-	{
-		perror("Failed to create socket or connect()");
-		exit(EXIT_FAILURE);
-	}
-
+	int TCPfd;
 
 	while(! should_exit)
 	{
@@ -69,6 +63,16 @@ int main(int argc, char **argv)
 					}
 					else
 					{
+						// create socket and connect to the server
+						TCPfd = TCPconnect(ip, port);
+						if(TCPfd < 0)
+						{
+							perror("Failed to create socket or connect()");
+							exit(EXIT_FAILURE);
+						}
+
+						printf("Sending LOGIN command (%s)\n", cmd_str_arg);
+						// send login message and receive confirmation
 						is_logged = login(TCPfd, cmd_str_arg);
 						if(is_logged == true)
 						{
@@ -87,10 +91,14 @@ int main(int argc, char **argv)
 			}
 			else if(strcmp(command, DISC_STR)==0)
 			{
-
-				is_logged = false;
-				printf("Sending DISConnect command\n");
-
+				if(is_logged)
+				{
+					is_logged = false;
+					disconnect(TCPfd);
+					printf("Sending DISConnect command\n");
+				}
+				else
+					puts("You are not connected");
 			}
 			else if(strcmp(command, CHAT_STR)==0)
 			{
@@ -122,6 +130,8 @@ int main(int argc, char **argv)
 			else if(strcmp(command, EXIT_STR)==0)
 			{
 				should_exit = 1;
+				if(is_logged)
+					disconnect(TCPfd);
 				puts("Exiting...");
 
 			}
@@ -146,10 +156,9 @@ int login(int fd, char *username)
 	ServerToClient *msgStC;
 	uint8_t *buf;
 
+	// send login message
 	msg.type = CLIENT_TO_SERVER__TYPE__LOGIN;
 	msg.str = username;
-	//msg.has_id_min = 0;
-	//msg.has_id_max = 0;
 
 	buf = malloc(client_to_server__get_packed_size(&msg));
 	if(buf == NULL)
@@ -158,17 +167,15 @@ int login(int fd, char *username)
 		exit(EXIT_FAILURE);
 	}
 	client_to_server__pack(&msg, buf);
-
-	printf("Sending LOGIN command (%s)\n", username);
-
 	if(PROTOsend(fd, (char*) buf, client_to_server__get_packed_size(&msg)) != 0)
 	{
 		puts("Failed to send message");
 		free(buf);
 		return false;
 	}
-	free(buf);
+	free(buf);	// sent information not needed anymore. will reuse the buffer
 
+	// receive login confirmation
 	int len_received = PROTOrecv(fd, (char**)&buf);
 	if(len_received < 0)
 	{
@@ -190,9 +197,26 @@ int login(int fd, char *username)
 }
 
 
-int disconnect(int fd)
+void disconnect(int fd)
 {
+	ClientToServer msg = CLIENT_TO_SERVER__INIT;
+	uint8_t *buf;
 
+	// send disconnect message
+	msg.type = CLIENT_TO_SERVER__TYPE__DISC;
+
+	buf = malloc(client_to_server__get_packed_size(&msg));
+	if(buf == NULL)
+	{
+		perror("malloc in disconnect()");
+		exit(EXIT_FAILURE);
+	}
+	client_to_server__pack(&msg, buf);
+	if(PROTOsend(fd, (char*) buf, client_to_server__get_packed_size(&msg)) != 0)
+		puts("Failed to send message");
+
+	free(buf);	// sent information not needed anymore. will reuse the buffer
+	TCPclose(fd);
 }
 
 

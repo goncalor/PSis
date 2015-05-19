@@ -4,5 +4,6 @@
 void server(void);
 void * incoming_connection(void *fd);
 int manage_login(int fd, int loggedin);
+void manage_disconnect(int fd, int loggedin);
 
 #endif
