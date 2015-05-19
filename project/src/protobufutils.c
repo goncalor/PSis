@@ -17,7 +17,7 @@ int PROTOsend(int fd, char *message, unsigned len)
 	return TCPsend(fd, (char*) &len_aux, 4) + TCPsend(fd, message, len);
 }
 
-/* readsa a lenght-prefixed message from the socket associated to "fd" into "message". message is allocated with the needed size. returns the length of the message or negative on error. */
+/* reads a a lenght-prefixed message from the socket associated to "fd" into "message". message is allocated with the needed size. returns the length of the message or negative on error. */
 /* the fact that the message is allocated with the size of the prefix-length is exploitable */
 int PROTOrecv(int fd, char **message)
 {

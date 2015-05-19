@@ -41,6 +41,7 @@ void CRsetup()
 	printf("%d \n", fifo_relauncher);
 
 	signal(SIGPIPE, SIG_IGN);	// needed so that there is no program termination when write() tries to write to a broken pipe
+	signal(SIGINT, SIG_IGN);	// ignore ctrl-c
 }
 
 
@@ -93,7 +94,7 @@ void * CRrelauncher_read(void *var)
 void * CRserver_write(void *var)
 {
 	ssize_t retval;
-	char buf;
+	char buf=0;	// this can be anything. we just need to write something
 
 	while(1)
 	{
@@ -106,7 +107,7 @@ void * CRserver_write(void *var)
 void * CRrelauncher_write(void *var)
 {
 	ssize_t retval;
-	char buf;
+	char buf=0;	// this can be anything. we just need to write something
 
 	while(1)
 	{

@@ -7,8 +7,8 @@
 
 struct chatdb {
 	char **messages;
-	unsigned nr_messages;
-	unsigned max_messages;
+	unsigned nr_messages;	// the next free index in 'messages'
+	unsigned max_messages;	// the length of 'messages'
 };
 
 
@@ -108,5 +108,10 @@ char ** CSquery(chatdb *db, unsigned first, unsigned last)
 
 void CSdestroy(chatdb *db)
 {
-	// frees
+	int i;
+
+	for(i=0; i < db->nr_messages; i++)
+		free(db->messages[i]);
+
+	free(db);
 }

@@ -68,38 +68,103 @@ void * incoming_connection(void *arg)
 	char *buf;
 	int len_received, fd = *(int*)arg;
 	ClientToServer *msg;
+	boolean disc = false;
+	boolean loggedin = false;
 
-	len_received = PROTOrecv(fd, &buf);
-	if(len_received < 0)
+	while(!disc)
 	{
-		puts("PROTOrecv() failed");
-		pthread_exit(NULL);
+		len_received = PROTOrecv(fd, &buf);
+		if(len_received < 0)
+		{
+			puts("PROTOrecv() failed");
+			pthread_exit(NULL);
+		}
+
+		msg = client_to_server__unpack(NULL, len_received, (uint8_t*) buf);
+
+		switch(msg->type)
+		{
+			case CLIENT_TO_SERVER__TYPE__LOGIN:
+				puts("event login");
+				loggedin = manage_login(fd, loggedin);
+				break;
+			case CLIENT_TO_SERVER__TYPE__DISC:
+				puts("event disc");
+				disc = false;
+				if(loggedin)
+				{
+					// remove name, fd, etc
+				}
+				break;
+			case CLIENT_TO_SERVER__TYPE__CHAT:
+				puts("event chat");
+				if(loggedin)
+				{
+					// send chat to everyone
+				}
+				break;
+			case CLIENT_TO_SERVER__TYPE__QUERY:
+				puts("event query");
+				if(loggedin)
+				{
+					// send messages back to client
+				}
+				break;
+			default:
+				puts("event error");
+		}
+
+		printf("%s\n", msg->str);
+
+		client_to_server__free_unpacked(msg, NULL);
+		free(buf);
 	}
 
-	msg = client_to_server__unpack(NULL, len_received, (uint8_t*) buf);
-
-	switch(msg->type)
-	{
-		case CLIENT_TO_SERVER__TYPE__LOGIN:
-			puts("event login");
-			break;
-		case CLIENT_TO_SERVER__TYPE__DISC:
-			puts("event disc");
-			break;
-		case CLIENT_TO_SERVER__TYPE__CHAT:
-			puts("event chat");
-			break;
-		case CLIENT_TO_SERVER__TYPE__QUERY:
-			puts("event query");
-			break;
-		default:
-			puts("event error");
-	}
-
-	printf("%s\n", msg->str);
-
-	client_to_server__free_unpacked(msg, NULL);
-	free(buf);
+	puts("bye");
 
 	pthread_exit(NULL);
+}
+
+
+int manage_login(int fd, int loggedin)
+{
+	char *buf;
+	ServerToClient msgStC = SERVER_TO_CLIENT__INIT;
+
+	msgStC.has_code = true;
+	if(!loggedin)
+	{
+		loggedin = true;
+		// verify if there is no user with this username yet
+		// if(username does not exist)
+		msgStC.code = SERVER_TO_CLIENT__CODE__OK;
+		// else
+		//		msgStC.code = SERVER_TO_CLIENT__CODE__NOK;
+	}
+	else
+	{
+		// send NOK
+		msgStC.code = SERVER_TO_CLIENT__CODE__NOK;
+	}
+
+	buf = malloc(server_to_client__get_packed_size(&msgStC));
+	if(buf == NULL)
+	{
+		perror("malloc in login processing");
+		exit(EXIT_FAILURE);
+	}
+
+	server_to_client__pack(&msgStC, (uint8_t*) buf);
+	if(PROTOsend(fd, (char*) buf, server_to_client__get_packed_size(&msgStC)) != 0)
+	{
+		puts("Failed to reply to login message");
+	}
+
+	if(loggedin)
+	{
+		// save name, fd, etc
+	}
+	free(buf);
+
+	return loggedin;
 }

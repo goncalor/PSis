@@ -56,7 +56,6 @@ int main(int argc, char **argv)
 
 	while(! should_exit)
 	{
-
 		fgets(line, 100, stdin);
 		if(sscanf(line, "%s", command) == 1)
 		{
@@ -71,6 +70,14 @@ int main(int argc, char **argv)
 					else
 					{
 						is_logged = login(TCPfd, cmd_str_arg);
+						if(is_logged == true)
+						{
+							printf("You are now logged in as '%s'\n", cmd_str_arg);
+						}
+						else
+						{
+							puts("Failed to login. Try again with another username");
+						}
 					}
 				}
 				else
@@ -81,8 +88,8 @@ int main(int argc, char **argv)
 			else if(strcmp(command, DISC_STR)==0)
 			{
 
-				is_logged = 0;
-				printf("Sending DISconnnect command\n");
+				is_logged = false;
+				printf("Sending DISConnect command\n");
 
 			}
 			else if(strcmp(command, CHAT_STR)==0)
@@ -136,6 +143,7 @@ int main(int argc, char **argv)
 int login(int fd, char *username)
 {
 	ClientToServer msg = CLIENT_TO_SERVER__INIT;
+	ServerToClient *msgStC;
 	uint8_t *buf;
 
 	msg.type = CLIENT_TO_SERVER__TYPE__LOGIN;
@@ -156,10 +164,47 @@ int login(int fd, char *username)
 	if(PROTOsend(fd, (char*) buf, client_to_server__get_packed_size(&msg)) != 0)
 	{
 		puts("Failed to send message");
+		free(buf);
+		return false;
+	}
+	free(buf);
+
+	int len_received = PROTOrecv(fd, (char**)&buf);
+	if(len_received < 0)
+	{
+		if(len_received == -2)
+			free(buf);
 		return false;
 	}
 
-	return true;
+	msgStC = server_to_client__unpack(NULL, len_received, (uint8_t*) buf);
+	free(buf);
+	if(msgStC->has_code && msgStC->code == SERVER_TO_CLIENT__CODE__OK)
+	{
+		free(msgStC);
+		return true;
+	}
+
+	free(msgStC);
+	return false;
+}
+
+
+int disconnect(int fd)
+{
+
+}
+
+
+int chat(int fd, char *message)
+{
+
+}
+
+
+int query(int fd, unsigned first, unsigned last)
+{
+
 }
 
 

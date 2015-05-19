@@ -5,6 +5,6 @@
 
 int TCPfd_global;
 
-enum boolean {false, true};
+typedef enum boolean {false, true} boolean;
 
 #endif
