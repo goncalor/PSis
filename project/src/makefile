@@ -13,7 +13,7 @@ all: $(TARGET) $(CLIENT)
 $(TARGET): $(DEPS) $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lprotobuf-c -lpthread
 
-$(CLIENT): $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o
+$(CLIENT): $(CLIENT).o $(CLIENT).h messages.pb-c.o TCPlib.o inetutils.o protobufutils.o
 	$(CC) $(CFLAGS) $^ -o $@ -lprotobuf-c
 
 %.o: %.c $(DEPS)

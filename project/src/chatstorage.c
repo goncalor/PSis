@@ -98,7 +98,7 @@ char ** CSquery(chatdb *db, unsigned first, unsigned last)
 			return NULL;
 		}
 
-		for(i=0; i <= last-first; i++)
+		for(i=0; i < last-first; i++)
 			chunk[i] = db->messages[first+i];
 
 		chunk[i] = NULL;	// NULL terminate the new array

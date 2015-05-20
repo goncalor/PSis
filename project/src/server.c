@@ -101,14 +101,11 @@ void * incoming_connection(void *arg)
 			case CLIENT_TO_SERVER__TYPE__DISC:
 				puts("event disc");
 				disc = true;
-				void manage_disconnect(int fd, int loggedin);
+				manage_disconnect(fd, loggedin);
 				break;
 			case CLIENT_TO_SERVER__TYPE__CHAT:
 				puts("event chat");
-				if(loggedin)
-				{
-					// send chat to everyone
-				}
+				manage_chat(fd, msg, loggedin);
 				break;
 			case CLIENT_TO_SERVER__TYPE__QUERY:
 				puts("event query");
@@ -220,9 +217,31 @@ void manage_query(int fd, ClientToServer *msg, int loggedin)
 	server_to_client__pack(&msgStC, (uint8_t*) buf);
 	if(PROTOsend(fd, (char*) buf, server_to_client__get_packed_size(&msgStC)) != 0)
 	{
-		puts("Failed to reply to query message");
+		puts("failed to reply to query message");
 	}
 
 	// save to the log
 	free(buf);
+}
+
+
+void manage_chat(int fd, ClientToServer *msg, int loggedin)
+{
+	if(!loggedin)
+		return;
+
+	char *chat = msg->str;
+
+	puts(chat);
+
+	// sent to the broadcast task
+
+	// store chat
+	if(CSstore(chat_db, chat) != 0)
+	{
+		perror("failed to store message");
+		exit(EXIT_FAILURE);
+	}
+
+	// save to the log
 }

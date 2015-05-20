@@ -104,12 +104,17 @@ int main(int argc, char **argv)
 			}
 			else if(strcmp(command, CHAT_STR)==0)
 			{
-				if(sscanf(line, "%*s %s", cmd_str_arg) == 1)
+				if(sscanf(line, "%*s %[^\n]", cmd_str_arg) == 1)
 				{
-
-					printf("Sending CHAT command (%s)\n", cmd_str_arg);
-
-
+					if(!is_logged)
+					{
+						puts("Please login first");
+					}
+					else
+					{
+						printf("Sending CHAT command (%s)\n", cmd_str_arg);
+						chat(TCPfd, cmd_str_arg);
+					}
 				}
 				else
 				{
@@ -229,9 +234,26 @@ void disconnect(int fd)
 }
 
 
-int chat(int fd, char *message)
+void chat(int fd, char *message)
 {
+	ClientToServer msg = CLIENT_TO_SERVER__INIT;
+	uint8_t *buf;
 
+	// send disconnect message
+	msg.type = CLIENT_TO_SERVER__TYPE__CHAT;
+	msg.str = message;
+
+	buf = malloc(client_to_server__get_packed_size(&msg));
+	if(buf == NULL)
+	{
+		perror("malloc in disconnect()");
+		exit(EXIT_FAILURE);
+	}
+	client_to_server__pack(&msg, buf);
+	if(PROTOsend(fd, (char*) buf, client_to_server__get_packed_size(&msg)) != 0)
+		puts("Failed to send message");
+
+	free(buf);	// sent information not needed anymore. will reuse the buffer
 }
 
 
@@ -275,7 +297,7 @@ int query(int fd, unsigned first, unsigned last)
 	int i;
 	if(msgStC->n_str >= 1)
 		for(i=0; i < msgStC->n_str; i++)
-			printf("%d %s", first+i, msgStC->str[i]);
+			printf("%d %s\n", first+i, msgStC->str[i]);
 	else
 		puts("No messages in the specified range");
 
