@@ -54,13 +54,6 @@ int main(int argc, char **argv)
 
 /*-------- END check arguments --------*/
 
-	/* initialise chat storage */
-	chatdb *chatdb;
-
-	chatdb = CSinit();
-	if(chatdb == NULL)
-		exit(EXIT_FAILURE);
-
 	/* create a socket and listen */
 	TCPfd_global = TCPcreate(INADDR_ANY, port);
 	if(TCPfd_global < 0)

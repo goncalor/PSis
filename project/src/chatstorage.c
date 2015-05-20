@@ -75,8 +75,9 @@ char ** CSquery(chatdb *db, unsigned first, unsigned last)
 	char **chunk;
 	unsigned i;
 
-	if(last >= db->nr_messages)
-		last = db->nr_messages - 1;
+	last++;	// we will regard last as exclusive inside the function
+	if(last > db->nr_messages)
+		last = db->nr_messages;
 
 	if(last < first)
 	{
@@ -90,7 +91,7 @@ char ** CSquery(chatdb *db, unsigned first, unsigned last)
 	}
 	else
 	{
-		chunk = malloc((last-first+2)*sizeof(char *));	// extra position needed for NULL termination
+		chunk = malloc((last-first+1)*sizeof(char *));	// extra position needed for NULL termination
 		if(chunk == NULL)
 		{
 			perror("allocate chunk in CSquery()");

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <signal.h>
 
 #define LOGIN_STR "LOGIN"	// username 
 #define DISC_STR "DISC"
@@ -47,6 +48,7 @@ int main(int argc, char **argv)
 /*-------- END check arguments --------*/
 
 	int TCPfd;
+	signal(SIGINT, SIG_IGN);
 
 	while(! should_exit)
 	{
@@ -94,8 +96,8 @@ int main(int argc, char **argv)
 				if(is_logged)
 				{
 					is_logged = false;
-					disconnect(TCPfd);
 					printf("Sending DISConnect command\n");
+					disconnect(TCPfd);
 				}
 				else
 					puts("You are not connected");
@@ -118,9 +120,15 @@ int main(int argc, char **argv)
 			{
 				if(sscanf(line, "%*s %d %d", &cmd_int_arg1, &cmd_int_arg2) == 2)
 				{
-
-					printf("Sending QUERY command (%d %d)\n", cmd_int_arg1, cmd_int_arg2);
-
+					if(!is_logged)
+					{
+						puts("Please login first");
+					}
+					else
+					{
+						printf("Sending QUERY command (%d %d)\n", cmd_int_arg1, cmd_int_arg2);
+						query(TCPfd, cmd_int_arg1, cmd_int_arg2);
+					}
 				}
 				else
 				{
@@ -153,7 +161,6 @@ int main(int argc, char **argv)
 int login(int fd, char *username)
 {
 	ClientToServer msg = CLIENT_TO_SERVER__INIT;
-	ServerToClient *msgStC;
 	uint8_t *buf;
 
 	// send login message
@@ -176,11 +183,13 @@ int login(int fd, char *username)
 	free(buf);	// sent information not needed anymore. will reuse the buffer
 
 	// receive login confirmation
+	ServerToClient *msgStC;
+	buf = NULL;
 	int len_received = PROTOrecv(fd, (char**)&buf);
+
 	if(len_received < 0)
 	{
-		if(len_received == -2)
-			free(buf);
+		free(buf);
 		return false;
 	}
 
@@ -228,7 +237,50 @@ int chat(int fd, char *message)
 
 int query(int fd, unsigned first, unsigned last)
 {
+	ClientToServer msg = CLIENT_TO_SERVER__INIT;
+	uint8_t *buf;
 
+	// send disconnect message
+	msg.type = CLIENT_TO_SERVER__TYPE__QUERY;
+	msg.has_id_min = true;
+	msg.has_id_max = true;
+	msg.id_min = first;
+	msg.id_max = last;
+
+	buf = malloc(client_to_server__get_packed_size(&msg));
+	if(buf == NULL)
+	{
+		perror("malloc in disconnect()");
+		exit(EXIT_FAILURE);
+	}
+	client_to_server__pack(&msg, buf);
+	if(PROTOsend(fd, (char*) buf, client_to_server__get_packed_size(&msg)) != 0)
+		puts("Failed to send message");
+	free(buf);	// sent information not needed anymore. will reuse the buffer
+
+	// receive query results
+	ServerToClient *msgStC;
+	buf = NULL;
+	int len_received = PROTOrecv(fd, (char**)&buf);
+
+	if(len_received < 0)
+	{
+		free(buf);
+		return false;
+	}
+
+	msgStC = server_to_client__unpack(NULL, len_received, (uint8_t*) buf);
+	free(buf);
+
+	int i;
+	if(msgStC->n_str >= 1)
+		for(i=0; i < msgStC->n_str; i++)
+			printf("%d %s", first+i, msgStC->str[i]);
+	else
+		puts("No messages in the specified range");
+
+	free(msgStC);
+	return i;
 }
 
 

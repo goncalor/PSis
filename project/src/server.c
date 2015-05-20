@@ -6,6 +6,7 @@
 #include "messages.pb-c.h"
 #include "protobufutils.h"
 #include "server.h"
+#include "chatstorage.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -19,9 +20,17 @@
 
 #define BUF_LEN 1024*1024
 
+chatdb *chat_db;
+
 void server(void)
 {
 	int *newfd;
+
+	/* initialise chat storage */
+
+	chat_db = CSinit();
+	if(chat_db == NULL)
+		exit(EXIT_FAILURE);
 
 	// keyboard management theread
 	pthread_t thread_keyboad;
@@ -87,7 +96,7 @@ void * incoming_connection(void *arg)
 		{
 			case CLIENT_TO_SERVER__TYPE__LOGIN:
 				puts("event login");
-				loggedin = manage_login(fd, loggedin);
+				loggedin = manage_login(fd, msg, loggedin);
 				break;
 			case CLIENT_TO_SERVER__TYPE__DISC:
 				puts("event disc");
@@ -103,10 +112,7 @@ void * incoming_connection(void *arg)
 				break;
 			case CLIENT_TO_SERVER__TYPE__QUERY:
 				puts("event query");
-				if(loggedin)
-				{
-					// send messages back to client
-				}
+				manage_query(fd, msg, loggedin);
 				break;
 			default:
 				puts("event error");
@@ -124,10 +130,11 @@ void * incoming_connection(void *arg)
 }
 
 
-int manage_login(int fd, int loggedin)
+int manage_login(int fd, ClientToServer *msg, int loggedin)
 {
 	char *buf;
 	ServerToClient msgStC = SERVER_TO_CLIENT__INIT;
+	char *username = msg->str;
 
 	msgStC.has_code = true;
 	if(!loggedin)
@@ -176,4 +183,46 @@ void manage_disconnect(int fd, int loggedin)
 	}
 
 	TCPclose(fd);
+}
+
+void manage_query(int fd, ClientToServer *msg, int loggedin)
+{
+	if(!loggedin)
+		return;
+
+	// send messages back to client
+	char *buf;
+	ServerToClient msgStC = SERVER_TO_CLIENT__INIT;
+	char **messages;
+
+	if(!msg->has_id_min || !msg->has_id_max)
+		return;
+	messages = CSquery(chat_db, msg->id_min, msg->id_max);
+	if(messages == NULL)
+	{
+		puts("error while retrieving messages");
+		return;
+	}
+
+	int nr_messages;
+	for(nr_messages=0; messages[nr_messages] != NULL; nr_messages++)
+		;
+	msgStC.str = messages;
+	msgStC.n_str = nr_messages;
+
+	buf = malloc(server_to_client__get_packed_size(&msgStC));
+	if(buf == NULL)
+	{
+		perror("malloc in message query processing");
+		exit(EXIT_FAILURE);
+	}
+
+	server_to_client__pack(&msgStC, (uint8_t*) buf);
+	if(PROTOsend(fd, (char*) buf, server_to_client__get_packed_size(&msgStC)) != 0)
+	{
+		puts("Failed to reply to query message");
+	}
+
+	// save to the log
+	free(buf);
 }

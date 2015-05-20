@@ -4,5 +4,6 @@
 void usage(char *exename);
 int login(int fd, char *username);
 void disconnect(int fd);
+int query(int fd, unsigned first, unsigned last);
 
 #endif
