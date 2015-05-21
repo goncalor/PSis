@@ -19,10 +19,10 @@ $(CLIENT): $(CLIENT).o $(CLIENT).h messages.pb-c.o TCPlib.o inetutils.o protobuf
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-messages.pb-c.c:
+messages.pb-c.c: messages.proto
 	protoc-c messages.proto --c_out=.
 
-messages.pb-c.h:
+messages.pb-c.h: messages.proto
 	protoc-c messages.proto --c_out=.
 
 

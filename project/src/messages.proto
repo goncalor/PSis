@@ -24,3 +24,9 @@ message ServerToClient
 	optional Code code = 1;	// used for LOGIN only
 	repeated string str = 2;	// used for QUERY only
 }
+
+message ServerToBroadcast
+{
+	required int32 fd = 1;	// the file descriptor of the client who sent the message
+	required string str = 2;	// the message (chat) sent by the client
+}

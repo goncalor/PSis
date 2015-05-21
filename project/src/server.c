@@ -21,6 +21,7 @@
 #define BUF_LEN 1024*1024
 
 chatdb *chat_db;
+int fifo_broadcast;
 
 void server(void)
 {
@@ -43,6 +44,28 @@ void server(void)
 	pthread_t thread_rcv_fifo;
 	pthread_create(&thread_rcv_fifo, NULL, CRserver_read, NULL);
 
+	/* create fifo for broadcast */
+	char fifo_name_broadcast[strlen(FIFO_NAME_BROADCAST)+8];	// save some space for a PID
+
+	sprintf(fifo_name_broadcast, "%s-%d", FIFO_NAME_BROADCAST, (int) getpid());
+
+	if(mkfifo(fifo_name_broadcast, 0600) == -1)	// open for reading and writing so that it does not block
+	{
+		perror("create fifo broadcast");
+		exit(EXIT_FAILURE);
+	}
+	fifo_broadcast = open(fifo_name_broadcast, O_RDWR /*| O_NONBLOCK*/);
+	if(fifo_broadcast == -1)
+	{
+		perror("failed to open fifo for broadcast");
+		exit(EXIT_FAILURE);
+	}
+
+	/* create thread for broadcast */
+	pthread_t thread_chat_broadcast;
+	pthread_create(&thread_chat_broadcast, NULL, broadcast_chat, NULL);
+
+
 	while(1)
 	{
 		// accepts 
@@ -64,7 +87,6 @@ void server(void)
 
 
 	/* thread joins */
-	sleep(10000);
 	pthread_join(thread_keyboad, NULL);	// wait for thread_keyboad termination
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
@@ -82,11 +104,13 @@ void * incoming_connection(void *arg)
 
 	while(!disc)
 	{
+		buf = NULL;
 		len_received = PROTOrecv(fd, &buf);
 		if(len_received < 0)
 		{
 			puts("PROTOrecv() failed");
 			TCPclose(fd);
+			free(buf);
 			pthread_exit(NULL);
 		}
 
@@ -127,6 +151,44 @@ void * incoming_connection(void *arg)
 }
 
 
+void * broadcast_chat(void *arg)
+{
+	char *buf;
+	int len_received;
+	ServerToBroadcast *msg;
+	int fd_sender;
+	char *chat;
+
+	#ifdef DEBUG
+	puts("broadcast thread started");
+	#endif
+
+	while(1)
+	{
+		buf = NULL;
+		len_received = PROTOrecv(fifo_broadcast, &buf);
+		if(len_received < 0)
+		{
+			perror("receive in broadcast fifo");
+			//pthread_exit(NULL);
+		}
+		msg = server_to_broadcast__unpack(NULL, len_received, (uint8_t*) buf);
+		free(buf);
+
+		fd_sender = msg->fd;
+		chat = msg->str;
+
+		#ifdef DEBUG
+		printf("broadcast fd=%d '%s'\n", fd_sender, chat);
+		#endif
+
+		// send message to every client
+
+		server_to_broadcast__free_unpacked(msg, NULL);
+	}
+}
+
+
 int manage_login(int fd, ClientToServer *msg, int loggedin)
 {
 	char *buf;
@@ -161,12 +223,12 @@ int manage_login(int fd, ClientToServer *msg, int loggedin)
 	{
 		puts("Failed to reply to login message");
 	}
+	free(buf);
 
 	if(loggedin)
 	{
 		// save name, fd, etc
 	}
-	free(buf);
 
 	return loggedin;
 }
@@ -230,11 +292,30 @@ void manage_chat(int fd, ClientToServer *msg, int loggedin)
 	if(!loggedin)
 		return;
 
+	char *buf;
 	char *chat = msg->str;
+	ServerToBroadcast msgStB = SERVER_TO_BROADCAST__INIT;
 
+	#ifdef DEBUG
 	puts(chat);
+	#endif
 
-	// sent to the broadcast task
+	// send to the broadcast task
+	msgStB.fd = fd;
+	msgStB.str = chat;
+	buf = malloc(server_to_broadcast__get_packed_size(&msgStB));
+	if(buf == NULL)
+	{
+		perror("malloc in manage_chat()");
+		exit(EXIT_FAILURE);
+	}
+
+	server_to_broadcast__pack(&msgStB, (uint8_t*) buf);
+	if(PROTOsend(fifo_broadcast, (char*) buf, server_to_broadcast__get_packed_size(&msgStB)) != 0)
+	{
+		perror("Failed to send to broadcast task");
+	}
+	free(buf);
 
 	// store chat
 	if(CSstore(chat_db, chat) != 0)

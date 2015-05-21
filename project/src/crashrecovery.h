@@ -2,7 +2,7 @@
 #define _FIFO_H
 
 #define FIFO_BUF 6
-#define TIMEOUT 10
+#define TIMEOUT 10	// don't reduce bellow 2
 #define FIFO_NAME_SERVER "/tmp/psis-from-server"
 #define FIFO_NAME_RELAUNCHER "/tmp/psis-from-relauncher"
 
