@@ -9,6 +9,8 @@
 #include <string.h>
 #include <getopt.h>
 #include <signal.h>
+#include <sys/select.h>
+#include <unistd.h>
 
 #define LOGIN_STR "LOGIN"	// username 
 #define DISC_STR "DISC"
@@ -49,9 +51,31 @@ int main(int argc, char **argv)
 
 	int TCPfd;
 	signal(SIGINT, SIG_IGN);
+	fd_set readfds;
 
 	while(! should_exit)
 	{
+		FD_ZERO(&readfds);
+		FD_SET(STDIN_FILENO, &readfds);
+		if(is_logged)
+		{
+			FD_SET(TCPfd, &readfds);
+			select(TCPfd+1, &readfds, NULL, NULL, NULL);
+		}
+		else
+			select(STDIN_FILENO+1, &readfds, NULL, NULL, NULL);
+
+		if(is_logged && FD_ISSET(TCPfd, &readfds))
+		{
+			#ifdef DEBUG
+			puts("TCP message received");
+			#endif
+			receive_chat(TCPfd);
+			sleep(1);
+		}
+
+		if(FD_ISSET(STDIN_FILENO, &readfds))
+		{
 		fgets(line, 100, stdin);
 		if(sscanf(line, "%s", command) == 1)
 		{
@@ -157,6 +181,7 @@ int main(int argc, char **argv)
 		{
 			printf("Error in command\n");
 		}
+		}	// FD_ISSET
 	}
 
 	exit(0);
@@ -303,6 +328,31 @@ int query(int fd, unsigned first, unsigned last)
 
 	free(msgStC);
 	return i;
+}
+
+
+// receive and display chat message
+void receive_chat(int fd)
+{
+	ServerToClient *msgStC;
+	uint8_t *buf;
+	int len_received = PROTOrecv(fd, (char**)&buf);
+
+	buf = NULL;
+	if(len_received < 0)
+	{
+		free(buf);
+	}
+
+	msgStC = server_to_client__unpack(NULL, len_received, (uint8_t*) buf);
+	free(buf);
+
+	int i;
+	if(msgStC->n_str >= 1)
+		for(i=0; i < msgStC->n_str; i++)
+			puts(msgStC->str[i]);
+
+	free(msgStC);
 }
 
 
