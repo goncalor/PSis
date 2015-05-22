@@ -1,0 +1,84 @@
+#include "clientlist.h"
+#include "list.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+typedef struct clientinfo {
+	int fd;
+	char *username;
+} clientinfo;
+
+/* returns 0 if the usernames in 'ci1' and 'ci2' are equal */
+Item CLcompare(Item ci1, Item ci2)
+{
+	if(strcmp(((clientinfo*)ci1)->username, ((clientinfo*)ci2)->username) == 0)
+		return (Item) 0;
+	else
+		return (Item) -1;
+}
+
+void CLfree(Item ci)
+{
+	free(((clientinfo*)ci)->username);
+	free(ci);
+}
+
+clientlist * CLinit()
+{
+	return LSTinit();
+}
+
+/* returns 1 if the client was added, that is there was no
+ * previous client with the username 'username'. 
+ * 'lst' is updated only if the client is added */
+int CLadd(clientlist **lst, int fd, char *username)
+{
+	clientlist *aux;
+	clientinfo *ci = malloc(sizeof(clientinfo));
+	if(ci==NULL)
+	{
+		perror("CLadd()");
+		exit(EXIT_FAILURE);
+	}
+
+	ci->fd = fd;
+	ci->username = strdup(username);
+
+	for(aux=*lst; aux != NULL; aux = LSTfollowing(aux))
+	{
+		if(LSTapply(aux, CLcompare, (Item) ci) == 0)
+		{
+			CLfree(ci);
+			return 0;
+		}
+	}
+
+	*lst = LSTadd(*lst, (Item) ci);
+
+	return 1;
+}
+
+clientlist * CLremove(clientlist *lst, int fd)
+{
+	clientlist *aux, *aux2;
+
+	aux2 = lst;
+	for(aux=lst; aux != NULL; aux = LSTfollowing(aux))
+	{
+		// found the client we want to remove
+		if(((clientinfo*)LSTgetitem(aux))->fd == fd)
+		{
+			LSTremove(aux2, aux, CLfree);
+		}
+		aux2 = aux;
+	}
+
+	return lst;
+}
+
+void CLdestroy(clientlist *lst)
+{
+	LSTdestroy(lst, free);
+}
+

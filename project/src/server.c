@@ -7,6 +7,8 @@
 #include "protobufutils.h"
 #include "server.h"
 #include "chatstorage.h"
+#include "boolean.h"
+#include "clientlist.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -22,6 +24,7 @@
 
 chatdb *chat_db;
 int fifo_broadcast;
+clientlist * clist;
 
 void server(void)
 {
@@ -64,6 +67,9 @@ void server(void)
 	/* create thread for broadcast */
 	pthread_t thread_chat_broadcast;
 	pthread_create(&thread_chat_broadcast, NULL, broadcast_chat, NULL);
+
+	/* initialise client list */
+	clist = CLinit();
 
 
 	while(1)
@@ -198,12 +204,14 @@ int manage_login(int fd, ClientToServer *msg, int loggedin)
 	msgStC.has_code = true;
 	if(!loggedin)
 	{
-		loggedin = true;
 		// verify if there is no user with this username yet
-		// if(username does not exist)
-		msgStC.code = SERVER_TO_CLIENT__CODE__OK;
-		// else
-		//		msgStC.code = SERVER_TO_CLIENT__CODE__NOK;
+		if(CLadd(&clist, fd, username)) // username does not exist
+		{
+			msgStC.code = SERVER_TO_CLIENT__CODE__OK;
+			loggedin = true;
+		}
+		else	// username already exists. send NOK
+			msgStC.code = SERVER_TO_CLIENT__CODE__NOK;
 	}
 	else
 	{
@@ -224,11 +232,6 @@ int manage_login(int fd, ClientToServer *msg, int loggedin)
 		puts("Failed to reply to login message");
 	}
 	free(buf);
-
-	if(loggedin)
-	{
-		// save name, fd, etc
-	}
 
 	return loggedin;
 }
