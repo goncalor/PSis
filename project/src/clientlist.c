@@ -59,26 +59,45 @@ int CLadd(clientlist **lst, int fd, char *username)
 	return 1;
 }
 
+
 clientlist * CLremove(clientlist *lst, int fd)
 {
-	clientlist *aux, *aux2;
+	clientlist *aux, *aux2, *aux3;
 
-	aux2 = lst;
+	aux2 = NULL;
 	for(aux=lst; aux != NULL; aux = LSTfollowing(aux))
 	{
 		// found the client we want to remove
 		if(((clientinfo*)LSTgetitem(aux))->fd == fd)
 		{
-			LSTremove(aux2, aux, CLfree);
+			aux3 = LSTremove(aux2, aux, CLfree);
+			if(aux2 == NULL)
+				return aux3;
+			return lst;
 		}
+
 		aux2 = aux;
 	}
 
 	return lst;
 }
 
+
 void CLdestroy(clientlist *lst)
 {
 	LSTdestroy(lst, free);
 }
 
+
+void CLprint(clientlist *lst)
+{
+	clientlist *aux;
+
+	if(lst==NULL)
+		puts("-> (empty)");
+
+	for(aux=lst; aux != NULL; aux = LSTfollowing(aux))
+	{
+		printf("-> %s\n", ((clientinfo*)LSTgetitem(aux))->username);
+	}
+}

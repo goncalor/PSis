@@ -171,7 +171,6 @@ int main(int argc, char **argv)
 				if(is_logged)
 					disconnect(TCPfd);
 				puts("Exiting...");
-
 			}
 			else
 			{

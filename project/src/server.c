@@ -146,6 +146,9 @@ void * incoming_connection(void *arg)
 		}
 
 		//printf("%s\n", msg->str);
+		#ifdef DEBUG
+		CLprint(clist);
+		#endif
 
 		client_to_server__free_unpacked(msg, NULL);
 		free(buf);
@@ -241,7 +244,8 @@ void manage_disconnect(int fd, int loggedin)
 {
 	if(loggedin)
 	{
-		// remove name, fd, etc
+		// remove client from list
+		clist = CLremove(clist, fd);
 	}
 
 	TCPclose(fd);
