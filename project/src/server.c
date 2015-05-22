@@ -184,15 +184,30 @@ void * broadcast_chat(void *arg)
 		msg = server_to_broadcast__unpack(NULL, len_received, (uint8_t*) buf);
 		free(buf);
 
-		fd_sender = msg->fd;
 		chat = msg->str;
 
 		#ifdef DEBUG
+		fd_sender = msg->fd;
 		printf("broadcast fd=%d '%s'\n", fd_sender, chat);
 		#endif
 
 		// send message to every client
+		char *buf;
+		ServerToClient msgStC = SERVER_TO_CLIENT__INIT;
+		msgStC.n_str = 1;
+		msgStC.str = &chat;
 
+		buf = malloc(server_to_client__get_packed_size(&msgStC));
+		if(buf == NULL)
+		{
+			perror("malloc in broadcast pack");
+			exit(EXIT_FAILURE);
+		}
+
+		server_to_client__pack(&msgStC, (uint8_t*) buf);
+		CLbroadcast(clist, buf, server_to_client__get_packed_size(&msgStC));
+
+		free(buf);
 		server_to_broadcast__free_unpacked(msg, NULL);
 	}
 }
