@@ -7,6 +7,7 @@
 #include "crashrecovery.h"
 #include "server.h"
 #include "relauncher.h"
+#include "controllerfifos.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -70,6 +71,9 @@ int main(int argc, char **argv)
 
 	/* setup crash recovery */
 	CRsetup();
+
+	/* setup server controller */
+	setup_server_controller();
 
 	/* create server and relauncher */
 	if(fork() == 0)

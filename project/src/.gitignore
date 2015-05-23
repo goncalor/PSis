@@ -2,3 +2,4 @@
 client
 messages.pb-c.[ch]
 server
+server-controller

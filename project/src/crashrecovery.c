@@ -35,9 +35,19 @@ void CRsetup()
 	printf("fifo_name_relauncher %s\n", fifo_name_relauncher); 
 	
 	fifo_server = open(fifo_name_server, O_RDWR | O_NONBLOCK);
+	if(fifo_server == -1)
+	{
+		perror("Open fifo from server");	
+		exit(EXIT_FAILURE);
+	}
 	printf("%d \n", fifo_server);
 
 	fifo_relauncher = open(fifo_name_relauncher, O_RDWR | O_NONBLOCK);
+	if(fifo_relauncher == -1)
+	{
+		perror("Open fifo from relauncher");	
+		exit(EXIT_FAILURE);
+	}
 	printf("%d \n", fifo_relauncher);
 
 	signal(SIGPIPE, SIG_IGN);	// needed so that there is no program termination when write() tries to write to a broken pipe

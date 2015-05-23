@@ -3,8 +3,8 @@
 
 #define FIFO_BUF 6
 #define TIMEOUT 10	// don't reduce bellow 2
-#define FIFO_NAME_SERVER "/tmp/psis-from-server"
-#define FIFO_NAME_RELAUNCHER "/tmp/psis-from-relauncher"
+#define FIFO_NAME_SERVER "/tmp/server-cr-from-server"
+#define FIFO_NAME_RELAUNCHER "/tmp/server-cr-from-relauncher"
 
 int fifo_server;
 int fifo_relauncher;

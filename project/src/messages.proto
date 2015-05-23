@@ -30,3 +30,13 @@ message ServerToBroadcast
 	required int32 fd = 1;	// the file descriptor of the client who sent the message
 	required string str = 2;	// the message (chat) sent by the client
 }
+
+message ControllerToServer
+{
+	enum Type {
+		LOG = 0;
+		QUIT = 1;
+	}
+
+	required Type type = 1;	// identify type of command
+}

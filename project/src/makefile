@@ -1,19 +1,30 @@
 TARGET = server
 CLIENT = client
+CONTROLLER = server-controller
 CC = gcc
 CFLAGS = -Wall -g
-DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h threads.h crashrecovery.h server.h relauncher.h protobufutils.h messages.pb-c.h list.h item.h clientlist.h
-OBJ = $(TARGET).o TCPlib.o utils.o inetutils.o chatstorage.o threads.o crashrecovery.o main.o server.o relauncher.o protobufutils.o messages.pb-c.o list.o clientlist.o
+DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h threads.h crashrecovery.h server.h relauncher.h protobufutils.h messages.pb-c.h list.h item.h clientlist.h controllerfifos.h
+OBJ = $(TARGET).o TCPlib.o utils.o inetutils.o chatstorage.o threads.o crashrecovery.o main.o server.o relauncher.o protobufutils.o messages.pb-c.o list.o clientlist.o controllerfifos.o
+
+DEPS_client = $(CLIENT).h messages.pb-c.h TCPlib.h inetutils.h define.h protobufutils.h client.h boolean.h
+OBJ_client = $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o client.o 
+
+DEPS_controller = messages.pb-c.h TCPlib.h protobufutils.h boolean.h controllerfifos.h define.h
+OBJ_controller = inputcontroller.o messages.pb-c.o TCPlib.o protobufutils.o inputcontroller.o
+
 EDITOR = gedit
 
 .PHONY: all
 
-all: $(TARGET) $(CLIENT)
+all: $(TARGET) $(CLIENT) $(CONTROLLER)
 
 $(TARGET): $(DEPS) $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lprotobuf-c -lpthread
 
-$(CLIENT): $(CLIENT).o $(CLIENT).h messages.pb-c.o TCPlib.o inetutils.o protobufutils.o
+$(CLIENT): $(DEPS_client) $(OBJ_client)
+	$(CC) $(CFLAGS) $^ -o $@ -lprotobuf-c
+
+$(CONTROLLER): $(DEPS_controller) $(OBJ_controller)
 	$(CC) $(CFLAGS) $^ -o $@ -lprotobuf-c
 
 %.o: %.c $(DEPS)
