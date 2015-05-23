@@ -1,14 +1,12 @@
+#include "chatstorage.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "chatstorage.h"
-
-#define CS_STEP 1024
 
 struct chatdb {
 	char **messages;
 	unsigned nr_messages;	// the next free index in 'messages'
-	unsigned max_messages;	// the length of 'messages'
+	unsigned max_messages;	// the length of chatdb.'messages' array
 };
 
 
@@ -107,6 +105,19 @@ char ** CSquery(chatdb *db, unsigned first, unsigned last)
 	return chunk;
 }
 
+
+/*Returns the number of messages in the ChatDataBase*/
+int CSsize(chatdb *ptr)
+{
+	return ptr->nr_messages;
+}
+
+/*Returns the length of chatdb.'messages'*/
+int CSlength(chatdb *ptr)
+{
+	return ptr->max_messages;
+}
+
 void CSdestroy(chatdb *db)
 {
 	int i;
@@ -116,3 +127,4 @@ void CSdestroy(chatdb *db)
 
 	free(db);
 }
+

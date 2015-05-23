@@ -37,11 +37,21 @@ messages.pb-c.h: messages.proto
 	protoc-c messages.proto --c_out=.
 
 
-.PHONY: clean o
+.PHONY: clean o tests
 
 c:
 	clear	
 	$(RM) *.o
+
+tests:
+	ceedling new ../testing
+	cd ../testing
+	cp ../project.yml ../testing
+	rake module:create[chatstorage]
+	cd ../src
+	cp chatstorage.[ch] ../testing/src
+	cp ../test_chatstorage.c ../testing/test
+	#rake test:all
 
 o:
 	$(EDITOR) $(TARGET).c *.c *.h makefile &
