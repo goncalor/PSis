@@ -9,6 +9,7 @@
 #include "chatstorage.h"
 #include "boolean.h"
 #include "clientlist.h"
+#include "logging.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -22,16 +23,26 @@
 
 #define BUF_LEN 1024*1024
 
+#define LOG_CHAT "CHAT"
+#define LOG_DISC "DISCONNECT"
+#define LOG_LOGIN "LOGIN"
+#define LOG_QUERY "QUERY"
+#define LOG_START "START"
+#define LOG_STOP "START"
+
 chatdb *chat_db;
 int fifo_broadcast;
 clientlist * clist;
+unsigned log_event_nr = 1;
 
 void server(void)
 {
 	int *newfd;
 
-	/* initialise chat storage */
+	/* log server startup */
+	LOGadd(LOGfd_global, log_event_nr++, LOG_START);
 
+	/* initialise chat storage */
 	chat_db = CSinit();
 	if(chat_db == NULL)
 		exit(EXIT_FAILURE);
@@ -131,7 +142,7 @@ void * incoming_connection(void *arg)
 			case CLIENT_TO_SERVER__TYPE__DISC:
 				puts("event disc");
 				disc = true;
-				manage_disconnect(fd, loggedin);
+				manage_disconnect(fd, loggedin, username);
 				break;
 			case CLIENT_TO_SERVER__TYPE__CHAT:
 				puts("event chat");
@@ -139,7 +150,7 @@ void * incoming_connection(void *arg)
 				break;
 			case CLIENT_TO_SERVER__TYPE__QUERY:
 				puts("event query");
-				manage_query(fd, msg, loggedin);
+				manage_query(fd, msg, loggedin, username);
 				break;
 			default:
 				puts("event error");
@@ -215,6 +226,8 @@ void * broadcast_chat(void *arg)
 }
 
 
+/* 'loggedin' is the current login status.
+ * 'username' is modified only if loggin succeeds */
 int manage_login(int fd, ClientToServer *msg, int loggedin, char **username)
 {
 	char *buf;
@@ -253,22 +266,33 @@ int manage_login(int fd, ClientToServer *msg, int loggedin, char **username)
 	}
 	free(buf);
 
+	// add event to the log
+	char log_line[strlen(LOG_LOGIN) + strlen(msg->str) + 10];	// some spare bytes
+	sprintf(log_line, "%s %s", LOG_LOGIN, msg->str);
+	LOGadd(LOGfd_global, log_event_nr++, log_line);
+
 	return loggedin;
 }
 
 
-void manage_disconnect(int fd, int loggedin)
+void manage_disconnect(int fd, int loggedin, char *username)
 {
-	if(loggedin)
-	{
-		// remove client from list
-		clist = CLremove(clist, fd);
-	}
+	if(!loggedin)
+		return;
+
+	// remove client from list
+	clist = CLremove(clist, fd);
 
 	TCPclose(fd);
+
+	// add event to the log
+	char log_line[strlen(LOG_DISC) + strlen(username) + 10];	// spare bytes for numbers spaces, etc
+	sprintf(log_line, "%s %s", LOG_DISC, username);
+	LOGadd(LOGfd_global, log_event_nr++, log_line);
 }
 
-void manage_query(int fd, ClientToServer *msg, int loggedin)
+
+void manage_query(int fd, ClientToServer *msg, int loggedin, char *username)
 {
 	if(!loggedin)
 		return;
@@ -306,8 +330,12 @@ void manage_query(int fd, ClientToServer *msg, int loggedin)
 		puts("failed to reply to query message");
 	}
 
-	// save to the log
 	free(buf);
+
+	// save to the log
+	char log_line[strlen(LOG_QUERY) + strlen(username) + 32];	// spare bytes for numbers spaces, etc
+	sprintf(log_line, "%s %s %lu %lu", LOG_QUERY, username, msg->id_min, msg->id_max);
+	LOGadd(LOGfd_global, log_event_nr++, log_line);
 }
 
 
@@ -358,5 +386,8 @@ void manage_chat(int fd, ClientToServer *msg, int loggedin, char *username)
 	}
 	free(chat_to_store);
 
-	// save to the log
+	// add event to the log
+	char log_line[strlen(LOG_CHAT) + strlen(username) + 10];	// some spare bytes
+	sprintf(log_line, "%s %s", LOG_CHAT, username);
+	LOGadd(LOGfd_global, log_event_nr++, log_line);
 }

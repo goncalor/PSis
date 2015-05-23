@@ -3,8 +3,8 @@ CLIENT = client
 CONTROLLER = server-controller
 CC = gcc
 CFLAGS = -Wall -g
-DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h threads.h crashrecovery.h server.h relauncher.h protobufutils.h messages.pb-c.h list.h item.h clientlist.h controllerfifos.h
-OBJ = $(TARGET).o TCPlib.o utils.o inetutils.o chatstorage.o threads.o crashrecovery.o main.o server.o relauncher.o protobufutils.o messages.pb-c.o list.o clientlist.o controllerfifos.o
+DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h threads.h crashrecovery.h server.h relauncher.h protobufutils.h messages.pb-c.h list.h item.h clientlist.h controllerfifos.h logging.h
+OBJ = main.o server.o TCPlib.o utils.o inetutils.o chatstorage.o threads.o crashrecovery.o main.o server.o relauncher.o protobufutils.o messages.pb-c.o list.o clientlist.o controllerfifos.o logging.o
 
 DEPS_client = $(CLIENT).h messages.pb-c.h TCPlib.h inetutils.h define.h protobufutils.h client.h boolean.h
 OBJ_client = $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o client.o 
@@ -41,7 +41,7 @@ messages.pb-c.h: messages.proto
 
 c:
 	clear	
-	$(RM) *.o
+	$(RM) *.o server-*.log
 
 tests:
 	ceedling new ../testing
