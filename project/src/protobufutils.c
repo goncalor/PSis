@@ -30,7 +30,7 @@ int PROTOrecv(int fd, char **message)
 	{
 		nread = TCPrecv(fd, len_char, nleft);
 		if(nread < 0)
-			return -1;
+			return nread;
 		nleft -= nread;
 		ptr += nread;
 	}   
@@ -51,7 +51,7 @@ int PROTOrecv(int fd, char **message)
 	{
 		nread = TCPrecv(fd, *message, nleft);
 		if(nread < 0)
-			return -2;
+			return nread;
 		nleft -= nread;
 		ptr += nread;
 	}   
