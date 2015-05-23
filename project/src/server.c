@@ -142,7 +142,7 @@ void * incoming_connection(void *arg)
 			case CLIENT_TO_SERVER__TYPE__DISC:
 				puts("event disc");
 				disc = true;
-				manage_disconnect(fd, loggedin);
+				manage_disconnect(fd, loggedin, username);
 				break;
 			case CLIENT_TO_SERVER__TYPE__CHAT:
 				puts("event chat");
@@ -150,7 +150,7 @@ void * incoming_connection(void *arg)
 				break;
 			case CLIENT_TO_SERVER__TYPE__QUERY:
 				puts("event query");
-				manage_query(fd, msg, loggedin);
+				manage_query(fd, msg, loggedin, username);
 				break;
 			default:
 				puts("event error");
@@ -275,21 +275,24 @@ int manage_login(int fd, ClientToServer *msg, int loggedin, char **username)
 }
 
 
-void manage_disconnect(int fd, int loggedin)
+void manage_disconnect(int fd, int loggedin, char *username)
 {
-	if(loggedin)
-	{
-		// remove client from list
-		clist = CLremove(clist, fd);
-	}
+	if(!loggedin)
+		return;
+
+	// remove client from list
+	clist = CLremove(clist, fd);
 
 	TCPclose(fd);
 
 	// add event to the log
-	LOGadd(LOGfd_global, log_event_nr++, LOG_DISC);
+	char log_line[strlen(LOG_DISC) + strlen(username) + 10];	// spare bytes for numbers spaces, etc
+	sprintf(log_line, "%s %s", LOG_DISC, username);
+	LOGadd(LOGfd_global, log_event_nr++, log_line);
 }
 
-void manage_query(int fd, ClientToServer *msg, int loggedin)
+
+void manage_query(int fd, ClientToServer *msg, int loggedin, char *username)
 {
 	if(!loggedin)
 		return;
@@ -330,8 +333,8 @@ void manage_query(int fd, ClientToServer *msg, int loggedin)
 	free(buf);
 
 	// save to the log
-	char log_line[strlen(LOG_QUERY) + 32];	// spare bytes for numbers spaces, etc
-	sprintf(log_line, "%s %lu %lu", LOG_QUERY, msg->id_min, msg->id_max);
+	char log_line[strlen(LOG_QUERY) + strlen(username) + 32];	// spare bytes for numbers spaces, etc
+	sprintf(log_line, "%s %s %lu %lu", LOG_QUERY, username, msg->id_min, msg->id_max);
 	LOGadd(LOGfd_global, log_event_nr++, log_line);
 }
 
@@ -384,7 +387,7 @@ void manage_chat(int fd, ClientToServer *msg, int loggedin, char *username)
 	free(chat_to_store);
 
 	// add event to the log
-	char log_line[strlen(LOG_CHAT) + 10];	// some spare bytes
-	sprintf(log_line, "%s", LOG_CHAT);
+	char log_line[strlen(LOG_CHAT) + strlen(username) + 10];	// some spare bytes
+	sprintf(log_line, "%s %s", LOG_CHAT, username);
 	LOGadd(LOGfd_global, log_event_nr++, log_line);
 }
