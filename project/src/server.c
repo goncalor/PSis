@@ -102,7 +102,7 @@ void server(void)
 
 void * incoming_connection(void *arg)
 {
-	char *buf;
+	char *buf, *username;
 	int len_received, fd = *(int*)arg;
 	ClientToServer *msg;
 	boolean disc = false;
@@ -126,7 +126,7 @@ void * incoming_connection(void *arg)
 		{
 			case CLIENT_TO_SERVER__TYPE__LOGIN:
 				puts("event login");
-				loggedin = manage_login(fd, msg, loggedin);
+				loggedin = manage_login(fd, msg, loggedin, &username);
 				break;
 			case CLIENT_TO_SERVER__TYPE__DISC:
 				puts("event disc");
@@ -135,7 +135,7 @@ void * incoming_connection(void *arg)
 				break;
 			case CLIENT_TO_SERVER__TYPE__CHAT:
 				puts("event chat");
-				manage_chat(fd, msg, loggedin);
+				manage_chat(fd, msg, loggedin, username);
 				break;
 			case CLIENT_TO_SERVER__TYPE__QUERY:
 				puts("event query");
@@ -153,6 +153,9 @@ void * incoming_connection(void *arg)
 		client_to_server__free_unpacked(msg, NULL);
 		free(buf);
 	}
+
+	if(loggedin == true)
+		free(username);
 
 	puts("bye");
 
@@ -212,17 +215,17 @@ void * broadcast_chat(void *arg)
 }
 
 
-int manage_login(int fd, ClientToServer *msg, int loggedin)
+int manage_login(int fd, ClientToServer *msg, int loggedin, char **username)
 {
 	char *buf;
 	ServerToClient msgStC = SERVER_TO_CLIENT__INIT;
-	char *username = msg->str;
 
 	msgStC.has_code = true;
 	if(!loggedin)
 	{
+		*username = strdup(msg->str);
 		// verify if there is no user with this username yet
-		if(CLadd(&clist, fd, username)) // username does not exist
+		if(CLadd(&clist, fd, *username)) // username does not exist
 		{
 			msgStC.code = SERVER_TO_CLIENT__CODE__OK;
 			loggedin = true;
@@ -308,22 +311,31 @@ void manage_query(int fd, ClientToServer *msg, int loggedin)
 }
 
 
-void manage_chat(int fd, ClientToServer *msg, int loggedin)
+void manage_chat(int fd, ClientToServer *msg, int loggedin, char *username)
 {
 	if(!loggedin)
 		return;
 
 	char *buf;
 	char *chat = msg->str;
+	char *chat_to_store;
 	ServerToBroadcast msgStB = SERVER_TO_BROADCAST__INIT;
 
 	#ifdef DEBUG
 	puts(chat);
 	#endif
 
+	chat_to_store = malloc(sizeof(char)*(strlen(username) + strlen(": ") + strlen(chat) + 1));	// +1 is for \0
+	if(chat_to_store == NULL)
+	{
+		perror("malloc in manage_chat()");
+		exit(EXIT_FAILURE);
+	}
+	sprintf(chat_to_store, "%s: %s", username, chat);
+
 	// send to the broadcast task
 	msgStB.fd = fd;
-	msgStB.str = chat;
+	msgStB.str = chat_to_store;
 	buf = malloc(server_to_broadcast__get_packed_size(&msgStB));
 	if(buf == NULL)
 	{
@@ -339,11 +351,12 @@ void manage_chat(int fd, ClientToServer *msg, int loggedin)
 	free(buf);
 
 	// store chat
-	if(CSstore(chat_db, chat) != 0)
+	if(CSstore(chat_db, chat_to_store) != 0)
 	{
 		perror("failed to store message");
 		exit(EXIT_FAILURE);
 	}
+	free(chat_to_store);
 
 	// save to the log
 }

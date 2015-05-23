@@ -11,13 +11,13 @@ int PROTOsend(int fd, char *message, unsigned len)
 {
 	int len_aux = htonl(len);
 
-#ifdef DEBUG
+	#ifdef DEBUG
 	printf("len_aux %d\n", len);
-#endif
+	#endif
 	return TCPsend(fd, (char*) &len_aux, 4) + TCPsend(fd, message, len);
 }
 
-/* reads a a lenght-prefixed message from the socket associated to "fd" into "message". message is allocated with the needed size. returns the length of the message or negative on error. */
+/* reads a a lenght-prefixed message from the socket associated to "fd" into "message". message is allocated with the needed size. returns the length of the message or negative on error: -2 means the connection was closed by the peer */
 /* the fact that the message is allocated with the size of the prefix-length is exploitable */
 int PROTOrecv(int fd, char **message)
 {
@@ -36,9 +36,9 @@ int PROTOrecv(int fd, char **message)
 	}   
 
 	len = ntohl(*((uint32_t*) len_char));
-#ifdef DEBUG
+	#ifdef DEBUG
 	printf("len_aux %d\n", len);
-#endif
+	#endif
 	*message = malloc(len*sizeof(char));
 	if(*message == NULL)
 	{
