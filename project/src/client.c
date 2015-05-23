@@ -71,7 +71,12 @@ int main(int argc, char **argv)
 			#ifdef DEBUG
 			puts("TCP message received");
 			#endif
-			receive_chat(TCPfd);
+			if(receive_chat(TCPfd) == -2)
+			{
+				is_logged = false;
+				close(TCPfd);
+				puts("Connection closed by server");
+			}
 			sleep(1);
 		}
 
@@ -331,8 +336,10 @@ int query(int fd, unsigned first, unsigned last)
 }
 
 
-// receive and display chat message
-void receive_chat(int fd)
+/* receive and display chat message. Returns 0 on success. Returns negative on error:
+*  -1 on read error and -2 if the conection was closed by peer.
+*/
+int receive_chat(int fd)
 {
 	ServerToClient *msgStC;
 	uint8_t *buf;
@@ -342,7 +349,9 @@ void receive_chat(int fd)
 	if(len_received < 0)
 	{
 		free(buf);
+		return len_received;
 	}
+	
 
 	msgStC = server_to_client__unpack(NULL, len_received, (uint8_t*) buf);
 	free(buf);
@@ -353,6 +362,7 @@ void receive_chat(int fd)
 			puts(msgStC->str[i]);
 
 	free(msgStC);
+	return 0;
 }
 
 
