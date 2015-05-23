@@ -1,4 +1,5 @@
 *.o
+*.log
 client
 messages.pb-c.[ch]
 server

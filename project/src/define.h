@@ -4,5 +4,6 @@
 #define DEBUG
 
 int TCPfd_global;
+int LOGfd_global;
 
 #endif

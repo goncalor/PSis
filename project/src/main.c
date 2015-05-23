@@ -8,6 +8,7 @@
 #include "server.h"
 #include "relauncher.h"
 #include "controllerfifos.h"
+#include "logging.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -24,6 +25,9 @@
 
 
 #define LISTEN_MAX 16
+#define LOG_NAME	"server"
+#define LOG_NAME_EXT	"log"
+
 
 int main(int argc, char **argv)
 {
@@ -74,6 +78,14 @@ int main(int argc, char **argv)
 
 	/* setup server controller */
 	setup_server_controller();
+
+	/* setup server log file */
+	LOGfd_global = LOGcreate(LOG_NAME, LOG_NAME_EXT);
+	if(LOGfd_global == -1)
+	{
+		perror("failded to create log");
+		exit(EXIT_FAILURE);
+	}
 
 	/* create server and relauncher */
 	if(fork() == 0)
