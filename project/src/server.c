@@ -165,7 +165,6 @@ void * broadcast_chat(void *arg)
 	char *buf;
 	int len_received;
 	ServerToBroadcast *msg;
-	int fd_sender;
 	char *chat;
 
 	#ifdef DEBUG
@@ -187,12 +186,12 @@ void * broadcast_chat(void *arg)
 		chat = msg->str;
 
 		#ifdef DEBUG
+		int fd_sender;
 		fd_sender = msg->fd;
 		printf("broadcast fd=%d '%s'\n", fd_sender, chat);
 		#endif
 
 		// send message to every client
-		char *buf;
 		ServerToClient msgStC = SERVER_TO_CLIENT__INIT;
 		msgStC.n_str = 1;
 		msgStC.str = &chat;

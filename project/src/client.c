@@ -336,9 +336,9 @@ void receive_chat(int fd)
 {
 	ServerToClient *msgStC;
 	uint8_t *buf;
+	buf = NULL;
 	int len_received = PROTOrecv(fd, (char**)&buf);
 
-	buf = NULL;
 	if(len_received < 0)
 	{
 		free(buf);

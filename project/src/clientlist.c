@@ -97,7 +97,9 @@ int CLbroadcast(clientlist *lst, char *msg, unsigned len)
 	{
 		if(PROTOsend(((clientinfo*)LSTgetitem(aux))->fd, msg, len) != 0)
 		{
-			puts("Failed to reply to login message");
+			#ifdef DEBUG
+			perror("Failed to bloadcast");
+			#endif
 			err++;
 		}
 	}
