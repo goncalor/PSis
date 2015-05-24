@@ -25,7 +25,7 @@
 
 
 #define LISTEN_MAX 16
-#define LOG_NAME	"server"
+#define LOG_NAME	"logs/server"
 #define LOG_NAME_EXT	"log"
 
 

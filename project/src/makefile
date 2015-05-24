@@ -12,6 +12,7 @@ OBJ_client = $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o cl
 DEPS_controller = messages.pb-c.h TCPlib.h protobufutils.h boolean.h controllerfifos.h define.h
 OBJ_controller = inputcontroller.o messages.pb-c.o TCPlib.o protobufutils.o inputcontroller.o
 
+TESTINGDIR = ../testing
 EDITOR = gedit
 
 .PHONY: all
@@ -42,16 +43,10 @@ messages.pb-c.h: messages.proto
 c:
 	clear	
 	$(RM) *.o server-*.log
+	cd $(TESTINGDIR) ; make clean
 
 tests:
-	ceedling new ../testing
-	cd ../testing
-	cp ../project.yml ../testing
-	rake module:create[chatstorage]
-	cd ../src
-	cp chatstorage.[ch] ../testing/src
-	cp ../test_chatstorage.c ../testing/test
-	#rake test:all
+	cd $(TESTINGDIR) ; make all
 
 o:
 	$(EDITOR) $(TARGET).c *.c *.h makefile &
