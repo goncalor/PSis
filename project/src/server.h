@@ -13,5 +13,6 @@ int manage_login(int fd, ClientToServer *msg, int loggedin, char **username);
 void manage_disconnect(int fd, int loggedin, char *username);
 void manage_query(int fd, ClientToServer *msg, int loggedin, char *username);
 void manage_chat(int fd, ClientToServer *msg, int loggedin, char *username);
+void setup_fifo_broadcast();
 
 #endif

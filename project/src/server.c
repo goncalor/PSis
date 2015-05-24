@@ -48,6 +48,9 @@ void server(void)
 	if(chat_db == NULL)
 		exit(EXIT_FAILURE);
 
+	/* initialise client list */
+	clist = CLinit();
+
 	// crash recovery thereads
 	pthread_t thread_send_fifo;
 	pthread_create(&thread_send_fifo, NULL, CRserver_write, NULL);
@@ -58,23 +61,6 @@ void server(void)
 	pthread_t thread_killzombies;
 	pthread_create(&thread_killzombies, NULL, CRkillzombies, NULL);
 
-	/* create fifo for broadcast */
-	char fifo_name_broadcast[strlen(FIFO_NAME_BROADCAST)+8];	// save some space for a PID
-
-	sprintf(fifo_name_broadcast, "%s-%d", FIFO_NAME_BROADCAST, (int) getpid());
-
-	if(mkfifo(fifo_name_broadcast, 0600) == -1)	// open for reading and writing so that it does not block
-	{
-		perror("create fifo broadcast");
-		exit(EXIT_FAILURE);
-	}
-	fifo_broadcast = open(fifo_name_broadcast, O_RDWR /*| O_NONBLOCK*/);
-	if(fifo_broadcast == -1)
-	{
-		perror("failed to open fifo for broadcast");
-		exit(EXIT_FAILURE);
-	}
-
 	/* create thread for broadcast */
 	pthread_t thread_chat_broadcast;
 	pthread_create(&thread_chat_broadcast, NULL, broadcast_chat, NULL);
@@ -82,9 +68,6 @@ void server(void)
 	/* create thread for keyboard */
 	pthread_t thread_keybd;
 	pthread_create(&thread_keybd, NULL, server_keyboard, NULL);
-
-	/* initialise client list */
-	clist = CLinit();
 
 
 	while(1)
@@ -175,7 +158,9 @@ void * incoming_connection(void *arg)
 
 		//printf("%s\n", msg->str);
 		#ifdef DEBUG
+		pthread_mutex_lock(&mutex_clist);	// lock
 		CLprint(clist);
+		pthread_mutex_unlock(&mutex_clist);	// unlock
 		#endif
 
 		client_to_server__free_unpacked(msg, NULL);
@@ -237,7 +222,9 @@ void * broadcast_chat(void *arg)
 		}
 
 		server_to_client__pack(&msgStC, (uint8_t*) buf);
+		pthread_mutex_lock(&mutex_clist);	// lock
 		CLbroadcast(clist, buf, server_to_client__get_packed_size(&msgStC));
+		pthread_mutex_unlock(&mutex_clist);	// unlock
 
 		free(buf);
 		server_to_broadcast__free_unpacked(msg, NULL);
@@ -275,6 +262,7 @@ void * server_keyboard(void *var)
 				char aux[100];
 				int log_read_len;
 
+				pthread_mutex_lock(&mutex_log);	// lock
 				lseek(LOGfd_global, 0, SEEK_SET);
 				do
 				{
@@ -282,11 +270,18 @@ void * server_keyboard(void *var)
 					write(STDOUT_FILENO, aux, log_read_len);
 				}
 				while(log_read_len != 0);
+				pthread_mutex_unlock(&mutex_log);	// unlock
 				break;
 			case CONTROLLER_TO_SERVER__TYPE__QUIT:
 				// clean memory and quit
 				puts("Received QUIT command. Server is closing...");
+				pthread_mutex_lock(&mutex_log);	// lock
 				LOGadd(LOGfd_global, log_event_nr++, LOG_STOP);
+				pthread_mutex_unlock(&mutex_log);	// unlock
+
+				pthread_mutex_destroy(&mutex_chatdb);
+				pthread_mutex_destroy(&mutex_clist);
+				pthread_mutex_destroy(&mutex_log);
 				exit(EXIT_SUCCESS);
 				break;
 			default:
@@ -311,6 +306,7 @@ int manage_login(int fd, ClientToServer *msg, int loggedin, char **username)
 	{
 		*username = strdup(msg->str);
 		// verify if there is no user with this username yet
+		pthread_mutex_lock(&mutex_clist);	// lock
 		if(CLadd(&clist, fd, *username)) // username does not exist
 		{
 			msgStC.code = SERVER_TO_CLIENT__CODE__OK;
@@ -318,6 +314,7 @@ int manage_login(int fd, ClientToServer *msg, int loggedin, char **username)
 		}
 		else	// username already exists. send NOK
 			msgStC.code = SERVER_TO_CLIENT__CODE__NOK;
+		pthread_mutex_unlock(&mutex_clist);	// unlock
 	}
 	else
 	{
@@ -342,7 +339,9 @@ int manage_login(int fd, ClientToServer *msg, int loggedin, char **username)
 	// add event to the log
 	char log_line[strlen(LOG_LOGIN) + strlen(msg->str) + 10];	// some spare bytes
 	sprintf(log_line, "%s %s", LOG_LOGIN, msg->str);
+	pthread_mutex_lock(&mutex_log);	// lock
 	LOGadd(LOGfd_global, log_event_nr++, log_line);
+	pthread_mutex_unlock(&mutex_log);	// unlock
 
 	return loggedin;
 }
@@ -354,14 +353,18 @@ void manage_disconnect(int fd, int loggedin, char *username)
 		return;
 
 	// remove client from list
+	pthread_mutex_lock(&mutex_clist);	// lock
 	clist = CLremove(clist, fd);
+	pthread_mutex_unlock(&mutex_clist);	// unlock
 
 	TCPclose(fd);
 
 	// add event to the log
 	char log_line[strlen(LOG_DISC) + strlen(username) + 10];	// spare bytes for numbers spaces, etc
 	sprintf(log_line, "%s %s", LOG_DISC, username);
+	pthread_mutex_lock(&mutex_log);	// lock
 	LOGadd(LOGfd_global, log_event_nr++, log_line);
+	pthread_mutex_unlock(&mutex_log);	// unlock
 }
 
 
@@ -377,7 +380,9 @@ void manage_query(int fd, ClientToServer *msg, int loggedin, char *username)
 
 	if(!msg->has_id_min || !msg->has_id_max)
 		return;
+	pthread_mutex_lock(&mutex_chatdb);	// lock
 	messages = CSquery(chat_db, msg->id_min, msg->id_max);
+	pthread_mutex_unlock(&mutex_chatdb);	// unlock
 	if(messages == NULL)
 	{
 		perror("error while retrieving messages");
@@ -408,7 +413,9 @@ void manage_query(int fd, ClientToServer *msg, int loggedin, char *username)
 	// save to the log
 	char log_line[strlen(LOG_QUERY) + strlen(username) + 32];	// spare bytes for numbers spaces, etc
 	sprintf(log_line, "%s %s %lu %lu", LOG_QUERY, username,(unsigned long) msg->id_min, (unsigned long) msg->id_max);
+	pthread_mutex_lock(&mutex_log);	// lock
 	LOGadd(LOGfd_global, log_event_nr++, log_line);
+	pthread_mutex_unlock(&mutex_log);	// unlock
 }
 
 
@@ -452,15 +459,40 @@ void manage_chat(int fd, ClientToServer *msg, int loggedin, char *username)
 	free(buf);
 
 	// store chat
+	pthread_mutex_lock(&mutex_chatdb);	// lock
 	if(CSstore(chat_db, chat_to_store) != 0)
 	{
 		perror("failed to store message");
 		exit(EXIT_FAILURE);
 	}
+	pthread_mutex_unlock(&mutex_chatdb);	// unlock
 	free(chat_to_store);
 
 	// add event to the log
 	char log_line[strlen(LOG_CHAT) + strlen(username) + 10];	// some spare bytes
 	sprintf(log_line, "%s %s", LOG_CHAT, username);
+	pthread_mutex_lock(&mutex_log);	// lock
 	LOGadd(LOGfd_global, log_event_nr++, log_line);
+	pthread_mutex_unlock(&mutex_log);	// unlock
+}
+
+
+void setup_fifo_broadcast()
+{
+	/* create fifo for broadcast */
+	char fifo_name_broadcast[strlen(FIFO_NAME_BROADCAST)+8];	// save some space for a PID
+
+	sprintf(fifo_name_broadcast, "%s-%d", FIFO_NAME_BROADCAST, (int) getpid());
+
+	if(mkfifo(fifo_name_broadcast, 0600) == -1)	// open for reading and writing so that it does not block
+	{
+		perror("create fifo broadcast");
+		exit(EXIT_FAILURE);
+	}
+	fifo_broadcast = open(fifo_name_broadcast, O_RDWR /*| O_NONBLOCK*/);
+	if(fifo_broadcast == -1)
+	{
+		perror("failed to open fifo for broadcast");
+		exit(EXIT_FAILURE);
+	}
 }

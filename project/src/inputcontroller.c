@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <unistd.h>
 #include "messages.pb-c.h"
 #include "protobufutils.h"
 #include "boolean.h"
@@ -112,6 +113,10 @@ int main(int argc, char **argv)
 
 				if(msg.type == CONTROLLER_TO_SERVER__TYPE__QUIT)
 				{
+					char remove_command[100];
+					sleep(1);
+					sprintf(remove_command, "rm /tmp/server-*%s", argv[1]);
+					system(remove_command);
 					exit(EXIT_SUCCESS);
 				}
 

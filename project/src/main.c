@@ -56,6 +56,22 @@ int main(int argc, char **argv)
 
 /*-------- END check arguments --------*/
 
+	if(pthread_mutex_init(&mutex_clist, NULL) != 0)
+	{
+		perror("mutex init clist");
+		exit(EXIT_FAILURE);
+	}
+	if(pthread_mutex_init(&mutex_chatdb, NULL) != 0)
+	{
+		perror("mutex init chatdb");
+		exit(EXIT_FAILURE);
+	}
+	if(pthread_mutex_init(&mutex_log, NULL) != 0)
+	{
+		perror("mutex init log");
+		exit(EXIT_FAILURE);
+	}
+
 	/* create a socket and listen */
 	TCPfd_global = TCPcreate(INADDR_ANY, port);
 	if(TCPfd_global < 0)
@@ -75,6 +91,9 @@ int main(int argc, char **argv)
 
 	/* setup server controller */
 	setup_controllers();
+
+	/* setup server fifo for broadcast */
+	setup_fifo_broadcast();
 
 	/* setup server log file */
 	LOGfd_global = LOGcreate(LOG_NAME, LOG_NAME_EXT);
