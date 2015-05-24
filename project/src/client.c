@@ -5,6 +5,7 @@
 #include "protobufutils.h"
 #include "client.h"
 #include "boolean.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,7 +40,7 @@ int main(int argc, char **argv)
 		{
 			case 'p': port = atoi(optarg); break;
 			case 'i': ip = atoh(optarg); break;
-			case '?': usage(argv[0]); exit(EXIT_SUCCESS);
+			case '?': usage_client(argv[0]); exit(EXIT_SUCCESS);
 		}
 	}
 
@@ -47,6 +48,10 @@ int main(int argc, char **argv)
 	printf("ip: 0x%x\n", ip);
 	printf("port: %hu\n", port);
 	#endif
+
+	puts("");
+	listcommands_client();
+	puts("");
 
 /*-------- END check arguments --------*/
 
@@ -103,7 +108,9 @@ int main(int argc, char **argv)
 							exit(EXIT_FAILURE);
 						}
 
+						#ifdef DEBUG
 						printf("Sending LOGIN command (%s)\n", cmd_str_arg);
+						#endif
 						// send login message and receive confirmation
 						is_logged = login(TCPfd, cmd_str_arg);
 						if(is_logged == true)
@@ -112,7 +119,7 @@ int main(int argc, char **argv)
 						}
 						else
 						{
-							puts("Failed to login. Try again with another username");
+							puts("Failed to login. Username already in use.");
 						}
 					}
 				}
@@ -126,7 +133,10 @@ int main(int argc, char **argv)
 				if(is_logged)
 				{
 					is_logged = false;
+					#ifdef DEBUG
 					printf("Sending DISConnect command\n");
+					#endif
+					puts("You are now disconnected");
 					disconnect(TCPfd);
 				}
 				else
@@ -142,7 +152,9 @@ int main(int argc, char **argv)
 					}
 					else
 					{
+						#ifdef DEBUG
 						printf("Sending CHAT command (%s)\n", cmd_str_arg);
+						#endif
 						chat(TCPfd, cmd_str_arg);
 					}
 				}
@@ -161,7 +173,9 @@ int main(int argc, char **argv)
 					}
 					else
 					{
+						#ifdef DEBUG
 						printf("Sending QUERY command (%d %d)\n", cmd_int_arg1, cmd_int_arg2);
+						#endif
 						query(TCPfd, cmd_int_arg1, cmd_int_arg2);
 					}
 				}
@@ -366,7 +380,7 @@ int receive_chat(int fd)
 }
 
 
-void usage(char *exename)
+void usage_client(char *exename)
 {
 	printf("Usage: %s [-i ip] [-p port]\n", exename);
 	putchar('\n');

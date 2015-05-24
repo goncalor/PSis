@@ -29,7 +29,7 @@
 #define LOG_LOGIN "LOGIN"
 #define LOG_QUERY "QUERY"
 #define LOG_START "START"
-#define LOG_STOP "START"
+#define LOG_STOP "STOP"
 
 chatdb *chat_db;
 int fifo_broadcast;
@@ -99,7 +99,7 @@ void server(void)
 		*newfd = TCPaccept(TCPfd_global);
 		if(*newfd < 0)
 		{
-			puts("TCPaccept() failed");
+			perror("TCPaccept() failed");
 		}
 
 		pthread_t thread_incoming_connection;
@@ -132,7 +132,9 @@ void * incoming_connection(void *arg)
 		len_received = PROTOrecv(fd, &buf);
 		if(len_received < 0)
 		{
-			puts("PROTOrecv() failed");
+			#ifdef DEBUG
+			perror("PROTOrecv() failed");
+			#endif
 			TCPclose(fd);
 			free(buf);
 			pthread_exit(NULL);
@@ -143,20 +145,28 @@ void * incoming_connection(void *arg)
 		switch(msg->type)
 		{
 			case CLIENT_TO_SERVER__TYPE__LOGIN:
+				#ifdef DEBUG
 				puts("event login");
+				#endif
 				loggedin = manage_login(fd, msg, loggedin, &username);
 				break;
 			case CLIENT_TO_SERVER__TYPE__DISC:
+				#ifdef DEBUG
 				puts("event disc");
+				#endif
 				disc = true;
 				manage_disconnect(fd, loggedin, username);
 				break;
 			case CLIENT_TO_SERVER__TYPE__CHAT:
+				#ifdef DEBUG
 				puts("event chat");
+				#endif
 				manage_chat(fd, msg, loggedin, username);
 				break;
 			case CLIENT_TO_SERVER__TYPE__QUERY:
+				#ifdef DEBUG
 				puts("event query");
+				#endif
 				manage_query(fd, msg, loggedin, username);
 				break;
 			default:
@@ -175,7 +185,9 @@ void * incoming_connection(void *arg)
 	if(loggedin == true)
 		free(username);
 
+	#ifdef DEBUG
 	puts("bye");
+	#endif
 
 	pthread_exit(NULL);
 }
@@ -263,17 +275,18 @@ void * server_keyboard(void *var)
 				char aux[100];
 				int log_read_len;
 
+				lseek(LOGfd_global, 0, SEEK_SET);
 				do
 				{
 					log_read_len = read(LOGfd_global, aux, 100);
 					write(STDOUT_FILENO, aux, log_read_len);
 				}
 				while(log_read_len != 0);
-
 				break;
 			case CONTROLLER_TO_SERVER__TYPE__QUIT:
 				// clean memory and quit
 				puts("Received QUIT command. Server is closing...");
+				LOGadd(LOGfd_global, log_event_nr++, LOG_STOP);
 				exit(EXIT_SUCCESS);
 				break;
 			default:
@@ -322,7 +335,7 @@ int manage_login(int fd, ClientToServer *msg, int loggedin, char **username)
 	server_to_client__pack(&msgStC, (uint8_t*) buf);
 	if(PROTOsend(fd, (char*) buf, server_to_client__get_packed_size(&msgStC)) != 0)
 	{
-		puts("Failed to reply to login message");
+		perror("Failed to reply to login message");
 	}
 	free(buf);
 

@@ -3,6 +3,7 @@
 
 void usage(char *exename);
 void listcommands();
+void listcommands_client();
 void version(char *nr);
 
 #endif

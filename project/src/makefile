@@ -6,8 +6,8 @@ CFLAGS = -Wall -g
 DEPS = TCPlib.h utils.h inetutils.h define.h chatstorage.h crashrecovery.h server.h relauncher.h protobufutils.h messages.pb-c.h list.h item.h clientlist.h controllerfifos.h logging.h
 OBJ = main.o server.o TCPlib.o utils.o inetutils.o chatstorage.o crashrecovery.o main.o server.o relauncher.o protobufutils.o messages.pb-c.o list.o clientlist.o controllerfifos.o logging.o
 
-DEPS_client = $(CLIENT).h messages.pb-c.h TCPlib.h inetutils.h define.h protobufutils.h client.h boolean.h
-OBJ_client = $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o client.o 
+DEPS_client = $(CLIENT).h messages.pb-c.h TCPlib.h inetutils.h define.h protobufutils.h client.h boolean.h utils.h
+OBJ_client = $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o client.o utils.o
 
 DEPS_controller = messages.pb-c.h TCPlib.h protobufutils.h boolean.h controllerfifos.h define.h utils.h
 OBJ_controller = inputcontroller.o messages.pb-c.o TCPlib.o protobufutils.o inputcontroller.o utils.o
