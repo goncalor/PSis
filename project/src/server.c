@@ -388,7 +388,7 @@ void manage_query(int fd, ClientToServer *msg, int loggedin, char *username)
 
 	// save to the log
 	char log_line[strlen(LOG_QUERY) + strlen(username) + 32];	// spare bytes for numbers spaces, etc
-	sprintf(log_line, "%s %s %lu %lu", LOG_QUERY, username, msg->id_min, msg->id_max);
+	sprintf(log_line, "%s %s %lu %lu", LOG_QUERY, username,(unsigned long) msg->id_min, (unsigned long) msg->id_max);
 	LOGadd(LOGfd_global, log_event_nr++, log_line);
 }
 
