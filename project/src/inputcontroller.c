@@ -10,6 +10,7 @@
 #include "boolean.h"
 #include "controllerfifos.h"
 #include "define.h"
+#include "utils.h"
 
 #define SERVER_COMM_LEN 10
 
@@ -44,6 +45,10 @@ int main(int argc, char **argv)
 		perror("Open fifo");	
 		exit(EXIT_FAILURE);
 	}
+
+	putchar('\n');
+	listcommands();
+	putchar('\n');
 
 	/*-------- END check arguments --------*/
 

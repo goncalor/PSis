@@ -1,7 +1,7 @@
 #ifndef _DEFINE_H
 #define _DEFINE_H
 
-#define DEBUG
+//#define DEBUG
 
 int TCPfd_global;
 int LOGfd_global;

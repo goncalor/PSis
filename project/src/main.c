@@ -52,9 +52,7 @@ int main(int argc, char **argv)
 	printf("port: %hu\n", port);
 	#endif
 
-	putchar('\n');
-	listcommands();
-	putchar('\n');
+	puts("Starting server...");
 
 /*-------- END check arguments --------*/
 
@@ -85,6 +83,8 @@ int main(int argc, char **argv)
 		perror("failded to create log");
 		exit(EXIT_FAILURE);
 	}
+
+	printf("Server running with the PID %d\n", (int) getpid());
 
 	/* create server and relauncher */
 	if(fork() == 0)

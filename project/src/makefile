@@ -9,8 +9,8 @@ OBJ = main.o server.o TCPlib.o utils.o inetutils.o chatstorage.o crashrecovery.o
 DEPS_client = $(CLIENT).h messages.pb-c.h TCPlib.h inetutils.h define.h protobufutils.h client.h boolean.h
 OBJ_client = $(CLIENT).o messages.pb-c.o TCPlib.o inetutils.o protobufutils.o client.o 
 
-DEPS_controller = messages.pb-c.h TCPlib.h protobufutils.h boolean.h controllerfifos.h define.h
-OBJ_controller = inputcontroller.o messages.pb-c.o TCPlib.o protobufutils.o inputcontroller.o
+DEPS_controller = messages.pb-c.h TCPlib.h protobufutils.h boolean.h controllerfifos.h define.h utils.h
+OBJ_controller = inputcontroller.o messages.pb-c.o TCPlib.o protobufutils.o inputcontroller.o utils.o
 
 TESTINGDIR = ../testing
 EDITOR = gedit

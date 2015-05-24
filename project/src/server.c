@@ -258,16 +258,22 @@ void * server_keyboard(void *var)
 		switch(msg->type)
 		{
 			case CONTROLLER_TO_SERVER__TYPE__LOG:
-				#ifdef DEBUG
-				puts("server received LOG command");
-				#endif
-				// print log
+				puts("Received LOG command. Printing log...");
+				
+				char aux[100];
+				int log_read_len;
+
+				do
+				{
+					log_read_len = read(LOGfd_global, aux, 100);
+					write(STDOUT_FILENO, aux, log_read_len);
+				}
+				while(log_read_len != 0);
+
 				break;
 			case CONTROLLER_TO_SERVER__TYPE__QUIT:
 				// clean memory and quit
-				#ifdef DEBUG
-				puts("server received QUIT command");
-				#endif
+				puts("Received QUIT command. Server is closing...");
 				exit(EXIT_SUCCESS);
 				break;
 			default:
@@ -361,7 +367,7 @@ void manage_query(int fd, ClientToServer *msg, int loggedin, char *username)
 	messages = CSquery(chat_db, msg->id_min, msg->id_max);
 	if(messages == NULL)
 	{
-		puts("error while retrieving messages");
+		perror("error while retrieving messages");
 		return;
 	}
 
@@ -381,7 +387,7 @@ void manage_query(int fd, ClientToServer *msg, int loggedin, char *username)
 	server_to_client__pack(&msgStC, (uint8_t*) buf);
 	if(PROTOsend(fd, (char*) buf, server_to_client__get_packed_size(&msgStC)) != 0)
 	{
-		puts("failed to reply to query message");
+		perror("failed to reply to query message");
 	}
 
 	free(buf);

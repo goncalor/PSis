@@ -68,12 +68,16 @@ void * CRserver_read(void *var)
 	{
 		sleep(TIMEOUT);
 		retval = read(fifo_server, &buf, FIFO_BUF);
+		#ifdef DEBUG
 		printf("CRserver_read %d\n", (int) retval);
+		#endif
 		if(retval == -1)
 		{
 			if(fork() == 0)
 			{
+				#ifdef DEBUG
 				puts("relaunching relauncher...");
+				#endif
 				relauncher();
 			}
 		}
@@ -89,12 +93,16 @@ void * CRrelauncher_read(void *var)
 	{
 		sleep(TIMEOUT);
 		retval = read(fifo_relauncher, &buf, FIFO_BUF);
+		#ifdef DEBUG
 		printf("CRrelauncher_read %d\n", (int) retval);
+		#endif
 		if(retval == -1)
 		{
 			if(fork() == 0)
 			{
+				#ifdef DEBUG
 				puts("relaunching server...");
+				#endif
 				server();
 			}
 		}
@@ -103,26 +111,38 @@ void * CRrelauncher_read(void *var)
 
 void * CRserver_write(void *var)
 {
+	#ifdef DEBUG
 	ssize_t retval;
+	#endif
 	char buf=0;	// this can be anything. we just need to write something
 
 	while(1)
 	{
+		#ifdef DEBUG
 		retval = write(fifo_relauncher, &buf, sizeof(char));
 		printf("CRserver_write %d\n", (int) retval);
+		#else
+		write(fifo_relauncher, &buf, sizeof(char));
+		#endif
 		sleep(TIMEOUT/2);
 	}
 }
 
 void * CRrelauncher_write(void *var)
 {
+	#ifdef DEBUG
 	ssize_t retval;
+	#endif
 	char buf=0;	// this can be anything. we just need to write something
 
 	while(1)
 	{
+		#ifdef DEBUG
 		retval = write(fifo_server, &buf, sizeof(char));
 		printf("CRrelauncher_write %d\n", (int) retval);
+		#else
+		write(fifo_server, &buf, sizeof(char));
+		#endif
 		sleep(TIMEOUT/2);
 	}
 }
