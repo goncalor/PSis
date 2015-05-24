@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 	CRsetup();
 
 	/* setup server controller */
-	setup_server_controller();
+	setup_controllers();
 
 	/* setup server log file */
 	LOGfd_global = LOGcreate(LOG_NAME, LOG_NAME_EXT);

@@ -14,5 +14,6 @@ void * CRserver_read(void *var);
 void * CRrelauncher_read(void *var);
 void * CRserver_write(void *var);
 void * CRrelauncher_write(void *var);
+void * CRkillzombies(void *args);
 
 #endif

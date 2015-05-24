@@ -42,7 +42,7 @@ messages.pb-c.h: messages.proto
 
 c:
 	clear	
-	$(RM) *.o server-*.log
+	$(RM) *.o logs/server-*.log
 	cd $(TESTINGDIR) ; make clean
 
 tests:

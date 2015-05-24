@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <string.h>
 
+
 #define BUF_LEN 1024*1024
 
 #define LOG_CHAT "CHAT"
@@ -53,6 +54,9 @@ void server(void)
 
 	pthread_t thread_rcv_fifo;
 	pthread_create(&thread_rcv_fifo, NULL, CRserver_read, NULL);
+
+	pthread_t thread_killzombies;
+	pthread_create(&thread_killzombies, NULL, CRkillzombies, NULL);
 
 	/* create fifo for broadcast */
 	char fifo_name_broadcast[strlen(FIFO_NAME_BROADCAST)+8];	// save some space for a PID
@@ -102,11 +106,15 @@ void server(void)
 		pthread_create(&thread_incoming_connection, NULL, incoming_connection, newfd);
 	}
 
-
 	/* thread joins */
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
+	pthread_join(thread_killzombies, NULL);
+	pthread_join(thread_chat_broadcast, NULL);
+	pthread_join(thread_keybd, NULL);
+	#ifdef DEBUG
 	puts("server function ended");
+	#endif
 }
 
 
@@ -221,6 +229,53 @@ void * broadcast_chat(void *arg)
 
 		free(buf);
 		server_to_broadcast__free_unpacked(msg, NULL);
+	}
+}
+
+
+void * server_keyboard(void *var)
+{
+	int len_received;
+	char *buf;
+	ControllerToServer *msg;
+
+	#ifdef DEBUG
+	puts("starting server_keyboard()");
+	#endif
+
+	while(1)
+	{
+		buf = NULL;
+		len_received = PROTOrecv(fifo_keybd_server, &buf);
+		if(len_received < 0)
+		{
+			free(buf);
+			continue;
+		}
+
+		msg = controller_to_server__unpack(NULL, len_received, (uint8_t*) buf);
+
+		switch(msg->type)
+		{
+			case CONTROLLER_TO_SERVER__TYPE__LOG:
+				#ifdef DEBUG
+				puts("server received LOG command");
+				#endif
+				// print log
+				break;
+			case CONTROLLER_TO_SERVER__TYPE__QUIT:
+				// clean memory and quit
+				#ifdef DEBUG
+				puts("server received QUIT command");
+				#endif
+				exit(EXIT_SUCCESS);
+				break;
+			default:
+				break;
+		}
+
+		free(buf);
+		free(msg);
 	}
 }
 

@@ -13,7 +13,7 @@
 #include "define.h"
 
 
-void setup_server_controller()
+void setup_controllers()
 {
 	char fifo_name_server[strlen(FIFO_KEYBD_NAME) + strlen("server-") + 8]; // save some space for a PID
 	char fifo_name_relauncher[strlen(FIFO_KEYBD_NAME) + strlen("relauncher-") + 8];
@@ -60,89 +60,5 @@ void setup_server_controller()
 }
 
 
-void * server_keyboard(void *var)
-{
-	int len_received;
-	char *buf;
-	ControllerToServer *msg;
-
-	#ifdef DEBUG
-	puts("starting server_keyboard()");
-	#endif
-
-	while(1)
-	{
-		buf = NULL;
-		len_received = PROTOrecv(fifo_keybd_server, &buf);
-		if(len_received < 0)
-		{
-			free(buf);
-			continue;
-		}
-
-		msg = controller_to_server__unpack(NULL, len_received, (uint8_t*) buf);
-
-		switch(msg->type)
-		{
-			case CONTROLLER_TO_SERVER__TYPE__LOG:
-				#ifdef DEBUG
-				puts("server received LOG command");
-				#endif
-				// print log
-				break;
-			case CONTROLLER_TO_SERVER__TYPE__QUIT:
-				// clean memory and quit
-				#ifdef DEBUG
-				puts("server received QUIT command");
-				#endif
-				exit(EXIT_SUCCESS);
-				break;
-			default:
-				break;
-		}
-
-		free(buf);
-		free(msg);
-	}
-}
 
 
-void * relauncher_keyboard(void *var)
-{
-	int len_received;
-	char *buf;
-	ControllerToServer *msg;
-
-	#ifdef DEBUG
-	puts("starting relauncher_keyboard()");
-	#endif
-
-	while(1)
-	{
-		buf = NULL;
-		len_received = PROTOrecv(fifo_keybd_relauncher, &buf);
-		if(len_received < 0)
-		{
-			free(buf);
-			continue;
-		}
-
-		msg = controller_to_server__unpack(NULL, len_received, (uint8_t*) buf);
-
-		switch(msg->type)
-		{
-			case CONTROLLER_TO_SERVER__TYPE__QUIT:
-				// clean memory and quit
-				#ifdef DEBUG
-				puts("relauncher received QUIT command");
-				#endif
-				exit(EXIT_SUCCESS);
-				break;
-			default:
-				break;
-		}
-
-		free(buf);
-		free(msg);
-	}
-}

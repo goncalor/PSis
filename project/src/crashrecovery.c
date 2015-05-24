@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 
 void CRsetup()
@@ -126,3 +127,9 @@ void * CRrelauncher_write(void *var)
 	}
 }
 
+
+void *CRkillzombies(void *args)
+{
+	while(1)
+		wait(NULL);
+}
