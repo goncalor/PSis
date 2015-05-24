@@ -3,7 +3,6 @@
 #include "define.h"
 #include "TCPlib.h"
 #include "chatstorage.h"
-#include "threads.h"
 #include "crashrecovery.h"
 #include "server.h"
 #include "relauncher.h"
