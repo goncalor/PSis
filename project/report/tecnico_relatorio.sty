@@ -1,0 +1,246 @@
+% Pacote para a criação de Relatórios e outros Documentos no Instituto Superior
+%	Técnico
+% Package aimed towards the creation of Reports and other assorted Documents in
+%	Instituto Superior Técnico (now more broadly known as Técnico Lisboa)
+
+%		Criado por Rafael Gonçalves (73786@tecnico.ulisboa.pt)
+%		Created by Rafael Gonçalves (73786@tecnico.ulisboa.pt)
+
+
+\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+\ProvidesPackage{tecnico_relatorio}[22/03/2015 tecnico_relatorio]
+
+\RequirePackage[portuguese]{babel}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage{hyperref}
+\RequirePackage{graphicx}
+\RequirePackage{epstopdf}
+	\epstopdfsetup{update} % only generate pdf files when eps file is newer
+
+
+% Cover of the report:
+
+\newcommand{\trImage}{
+	\relax
+}
+\newcommand{\trSetImage}[2]{
+	\renewcommand{\trImage}{\includegraphics[width=#2]{#1}\\[1cm]}
+}
+
+\newcommand{\trCourse}{
+	\relax
+}
+\newcommand{\trSetCourse}[1]{
+	\renewcommand{\trCourse}{\textsc{\large #1}\\[3cm]}
+}
+
+\newcommand{\trSubject}{
+	\relax
+}
+
+\newcommand{\trSetSubject}[1]{
+	\renewcommand{\trSubject}{\textsc{\LARGE #1}\\[1.5cm]}
+}
+
+\newcommand{\trType}{
+	\relax
+}
+\newcommand{\trSetType}[1]{
+	\renewcommand{\trType}{\textsc{\Large #1}\\[1.5cm]}
+}
+
+\newcommand{\trTitle}{
+	\relax
+}
+\newcommand{\trSetTitle}[1]{
+	\renewcommand{\trTitle}{{ \huge \bfseries #1 \\[2cm] }}
+}
+
+\newcommand{\trAuthPrologue}{
+	\relax
+}
+\newcommand{\trAuthEpilogue}{
+	\relax
+}
+
+\newcommand{\trSetStyle}[2]{
+	\renewcommand{\trAuthPrologue}{
+		#1
+	}
+	\renewcommand{\trAuthEpilogue}{
+		#2
+	}
+}
+
+\newcommand{\trGenPrologue}{
+	\relax
+}
+\newcommand{\trGenEpilogue}{
+	\relax
+}
+
+\newcommand{\trSetGenStyle}[2]{
+	\renewcommand{\trGenPrologue}{
+		#1
+	}
+	\renewcommand{\trGenEpilogue}{
+		#2
+	}
+}
+
+\newcommand{\trSetBoxStyle}[1]{
+	\trSetStyle{
+		\begin{minipage}{#1\textwidth}
+			\begin{center} \large
+	}{
+			\end{center}
+		\end{minipage}
+	}
+	\trSetGenStyle{\hfil}{\hfil}
+}
+
+
+\newcommand{\trGroupNo}{
+	\relax
+}
+\newcommand{\trSetGroupNo}[1]{
+	\renewcommand{\trGroupNo}{\textsc{\Large #1}\\[.5cm]}
+}
+
+\newcommand{\trAuthorOne}{
+	\relax
+}
+\newcommand{\trAuthorTwo}{
+	\relax
+}
+\newcommand{\trAuthorThree}{
+	\relax
+}
+\newcommand{\trAuthorFour}{
+	\relax
+}
+\newcommand{\trAuthorFive}{
+	\relax
+}
+\newcommand{\trAuthorSix}{
+	\relax
+}
+
+\newcommand{\trSetAuthors}{
+	\relax
+}
+
+\newcommand{\trSetAuthorNr}[1]{
+	\ifnum #1>0
+		\renewcommand{\trSetAuthors}[1]{
+			\renewcommand{\trAuthorOne}{\trAuthPrologue ##1 \trAuthEpilogue}
+		}
+	\fi
+	
+	\ifnum #1>1
+		\renewcommand{\trSetAuthors}[2]{
+			\renewcommand{\trAuthorOne}{\trAuthPrologue ##1 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorTwo}{\trAuthPrologue ##2 \trAuthEpilogue}
+		}
+	\fi
+	
+	\ifnum #1>2
+		\renewcommand{\trSetAuthors}[3]{
+			\renewcommand{\trAuthorOne}{\trAuthPrologue ##1 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorTwo}{\trAuthPrologue ##2 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorThree}{\trAuthPrologue ##3 \trAuthEpilogue}
+		}
+	\fi
+	
+	\ifnum #1>3
+		\renewcommand{\trSetAuthors}[4]{
+			\renewcommand{\trAuthorOne}{\trAuthPrologue ##1 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorTwo}{\trAuthPrologue ##2 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorThree}{\trAuthPrologue ##3 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorFour}{\trAuthPrologue ##4 \trAuthEpilogue}
+		}
+	\fi
+	
+	\ifnum #1>4
+		\renewcommand{\trSetAuthors}[5]{
+			\renewcommand{\trAuthorOne}{\trAuthPrologue ##1 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorTwo}{\trAuthPrologue ##2 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorThree}{\trAuthPrologue ##3 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorFour}{\trAuthPrologue ##4 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorOne}{\trAuthPrologue ##5 \trAuthEpilogue}
+		}
+	\fi
+	
+	\ifnum #1>5
+		\renewcommand{\trSetAuthors}[6]{
+			\renewcommand{\trAuthorOne}{\trAuthPrologue ##1 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorTwo}{\trAuthPrologue ##2 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorThree}{\trAuthPrologue ##3 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorFour}{\trAuthPrologue ##4 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorOne}{\trAuthPrologue ##5 \trAuthEpilogue}
+			
+			\renewcommand{\trAuthorSix}{\trAuthPrologue ##6 \trAuthEpilogue}
+			
+		}
+	\fi
+	
+}
+
+
+\newcommand{\trProfessor}{
+	\relax
+}
+\newcommand{\trSetProfessor}[1]{
+	\renewcommand{\trProfessor}{{ \large \bfseries #1  }}
+}
+
+
+
+
+
+
+\newcommand{\trMakeCover}{
+	\begin{titlepage}
+		\begin{center}
+			\trImage
+            \trCourse
+			\trSubject
+			\trType
+			\trTitle
+			
+            \trGroupNo
+            
+			\trGenPrologue
+			
+			\trAuthorOne		
+			\trAuthorTwo			
+			\trAuthorThree			
+			\trAuthorFour			
+			\trAuthorFive			
+			\trAuthorSix
+			
+			\trGenEpilogue
+			\vspace{15mm}
+			
+			\trProfessor
+			
+			\vfill
+			{\large \today}
+			\pagebreak
+		\end{center}
+	\end{titlepage}
+}

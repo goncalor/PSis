@@ -1,0 +1,100 @@
+\documentclass[a4paper]{article}
+
+\usepackage{tecnico_relatorio}
+
+\usepackage{textcomp}
+\usepackage[hypcap]{caption} % makes \ref point to top of figures and tables
+%\usepackage{rotating}
+\usepackage{float}
+\usepackage[nottoc]{tocbibind}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage[justification=centering]{caption}
+\usepackage{listings}
+\usepackage{indentfirst} % indent first paragraph in section
+\usepackage{geometry}	% margins
+
+\begin{document}
+	\newgeometry{left=4.5cm,right=4.5cm}
+
+	\trSetImage{img/tecnico_logo}{6cm} % Logotipo do Técnico
+    
+    \trSetCourse{Mestrado em Engenharia Electrotécnica \\e de Computadores}
+    
+	\trSetSubject{Programação de Sistemas}
+	
+	%\trSetType{2ª Parte}
+
+	\trSetTitle{Projecto}
+
+	\trSetBoxStyle{0.3}
+
+	\trSetGroupNo{Grupo 3}
+
+	\trSetAuthorNr{2}
+
+	\trSetAuthors
+	{
+		\begin{center}
+			Gonçalo Ribeiro
+
+			73294
+		\end{center}
+	}{
+		\begin{center}
+			Miraje Gentilal
+
+			73547
+		\end{center}
+	}
+
+	\trSetProfessor{Prof. João Nuno de Oliveira e Silva}
+
+\trMakeCover
+    
+	\restoregeometry
+
+	\tableofcontents
+	\pagenumbering{gobble}
+
+	\pagebreak
+
+	\pagenumbering{arabic}
+	\setcounter{page}{1}
+
+
+	\section{Server Architecture}
+
+	\subsection{Components Implementation}
+
+	\subsection{Components Communication}
+
+
+
+	\section{Parallelism implementations}
+
+
+
+	\section{Server data structures}
+
+	\subsection{Race conditions}
+
+
+
+	\section{Fault tolerance handling}
+
+
+
+	\section{Communication}
+
+
+
+	\section{Unitary testing}
+
+
+
+	\section{Conclusions and comments}
+
+
+
+\end{document}
