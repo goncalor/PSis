@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 #include "messages.pb-c.h"
 #include "protobufutils.h"
 #include "boolean.h"
@@ -14,6 +15,7 @@
 
 int main(int argc, char **argv)
 {
+	/*-------- check arguments --------*/
 	if(argc != 2)
 	{
 		printf("Usage: %s <fifo_identifier>\n\n", argv[0]);
@@ -23,22 +25,31 @@ int main(int argc, char **argv)
 		exit(EXIT_SUCCESS);
 	}	
 	
-	char fifo_input_server[strlen(FIFO_NAME)+8]; // save some space for a PID
-	char comm[SERVER_COMM_LEN];
+	char fifo_name_server[strlen(FIFO_KEYBD_NAME) + strlen("server-") + 8]; // save some space for a PID
+	char fifo_name_relauncher[strlen(FIFO_KEYBD_NAME) + strlen("relauncher-") + 8];
 
-	sprintf(fifo_input_server, "%s-%s", FIFO_NAME, argv[1]);
+	sprintf(fifo_name_server, "%s-server-%s", FIFO_KEYBD_NAME, argv[1]);
+	sprintf(fifo_name_relauncher, "%s-relauncher-%s", FIFO_KEYBD_NAME, argv[1]);
+
 	#ifdef DEBUG
-	puts(fifo_input_server);
+	puts(fifo_name_server);
+	puts(fifo_name_relauncher);
 	#endif
 
-	int fifo_input = open(fifo_input_server, O_RDWR | O_NONBLOCK);
+	int fifo_server = open(fifo_name_server, O_RDWR | O_NONBLOCK);
+	int fifo_relauncher = open(fifo_name_relauncher, O_RDWR | O_NONBLOCK);
 	
-	if(fifo_input == -1)
+	if(fifo_server == -1 || fifo_relauncher == -1)
 	{
 		perror("Open fifo");	
 		exit(EXIT_FAILURE);
 	}
 
+	/*-------- END check arguments --------*/
+
+	signal(SIGPIPE, SIG_IGN);   // needed so that there is no program termination when write() tries to write to a broken pipe
+
+	char comm[SERVER_COMM_LEN];
 	boolean valid_command;
 	char *buf;
 	ControllerToServer msg = CONTROLLER_TO_SERVER__INIT;
@@ -59,9 +70,7 @@ int main(int argc, char **argv)
 			if(strcmp(comm, "QUIT") == 0)
 			{
 				//puts("Exiting...");
-				
 				msg.type = CONTROLLER_TO_SERVER__TYPE__QUIT;
-				exit(EXIT_SUCCESS);
 			}
 			else if(strcmp(comm, "LOG") == 0)
 			{
@@ -84,11 +93,23 @@ int main(int argc, char **argv)
 				}
 
 				controller_to_server__pack(&msg, (uint8_t*) buf);
-				if(PROTOsend(fifo_input, (char*) buf, controller_to_server__get_packed_size(&msg)) != 0)
+				if(PROTOsend(fifo_server, (char*) buf, controller_to_server__get_packed_size(&msg)) != 0)
 				{
 					perror("Failed to send command to server");
 				}
+
+				if(PROTOsend(fifo_relauncher, (char*) buf, controller_to_server__get_packed_size(&msg)) != 0)
+				{
+					perror("Failed to send command to relauncher");
+				}
+
 				free(buf);
+
+				if(msg.type == CONTROLLER_TO_SERVER__TYPE__QUIT)
+				{
+					exit(EXIT_SUCCESS);
+				}
+
 			}
 		}
 	}

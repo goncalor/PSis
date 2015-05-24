@@ -1,4 +1,5 @@
 #include "crashrecovery.h"
+#include "controllerfifos.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -19,8 +20,11 @@ void relauncher(void)
 	pthread_t thread_rcv_fifo;
 	pthread_create(&thread_rcv_fifo, NULL, CRrelauncher_read, NULL);
 
+	/* create thread for keyboard */
+	pthread_t thread_keybd;
+	pthread_create(&thread_keybd, NULL, relauncher_keyboard, NULL);
+
 	/* thread joins */
-	sleep(10000);
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
 	puts("relauncher function ended");

@@ -10,6 +10,7 @@
 #include "boolean.h"
 #include "clientlist.h"
 #include "logging.h"
+#include "controllerfifos.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -47,10 +48,6 @@ void server(void)
 	if(chat_db == NULL)
 		exit(EXIT_FAILURE);
 
-	// keyboard management theread
-	pthread_t thread_keyboad;
-	pthread_create(&thread_keyboad, NULL, read_commands, NULL);
-
 	// crash recovery thereads
 	pthread_t thread_send_fifo;
 	pthread_create(&thread_send_fifo, NULL, CRserver_write, NULL);
@@ -79,6 +76,10 @@ void server(void)
 	pthread_t thread_chat_broadcast;
 	pthread_create(&thread_chat_broadcast, NULL, broadcast_chat, NULL);
 
+	/* create thread for keyboard */
+	pthread_t thread_keybd;
+	pthread_create(&thread_keybd, NULL, server_keyboard, NULL);
+
 	/* initialise client list */
 	clist = CLinit();
 
@@ -104,7 +105,6 @@ void server(void)
 
 
 	/* thread joins */
-	pthread_join(thread_keyboad, NULL);	// wait for thread_keyboad termination
 	pthread_join(thread_send_fifo, NULL);
 	pthread_join(thread_rcv_fifo, NULL);
 	puts("server function ended");

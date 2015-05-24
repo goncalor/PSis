@@ -1,4 +1,6 @@
 #include "crashrecovery.h"
+#include "server.h"
+#include "relauncher.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +20,11 @@ void CRsetup()
 	sprintf(fifo_name_server, "%s-%d", FIFO_NAME_SERVER, (int) getpid());
 	sprintf(fifo_name_relauncher, "%s-%d", FIFO_NAME_RELAUNCHER, (int) getpid());
 
+	#ifdef DEBUG
+	printf("fifo_name_server %s\n", fifo_name_server); 
+	printf("fifo_name_relauncher %s\n", fifo_name_relauncher); 
+	#endif
+
 	if(mkfifo(fifo_name_server, 0600) == -1)	// open for reading and writing so that it does not block
 	{
 		perror("create fifo server");
@@ -31,8 +38,6 @@ void CRsetup()
 	}
 
 	/* create file descriptors for both ends */
-	printf("fifo_name_server %s\n", fifo_name_server); 
-	printf("fifo_name_relauncher %s\n", fifo_name_relauncher); 
 	
 	fifo_server = open(fifo_name_server, O_RDWR | O_NONBLOCK);
 	if(fifo_server == -1)
@@ -40,7 +45,6 @@ void CRsetup()
 		perror("Open fifo from server");	
 		exit(EXIT_FAILURE);
 	}
-	printf("%d \n", fifo_server);
 
 	fifo_relauncher = open(fifo_name_relauncher, O_RDWR | O_NONBLOCK);
 	if(fifo_relauncher == -1)
@@ -48,16 +52,11 @@ void CRsetup()
 		perror("Open fifo from relauncher");	
 		exit(EXIT_FAILURE);
 	}
-	printf("%d \n", fifo_relauncher);
 
 	signal(SIGPIPE, SIG_IGN);	// needed so that there is no program termination when write() tries to write to a broken pipe
 	signal(SIGINT, SIG_IGN);	// ignore ctrl-c
 }
 
-
-
-void relauncher(void);
-void server(void);
 
 void * CRserver_read(void *var)
 {
