@@ -11,11 +11,7 @@
 /* creates a log of the form name-PID.ext. returns a file descriptor on success or -1 on error */
 int LOGcreate(char *name, char *ext)
 {
-	char *log_name;
-
-	log_name = malloc(strlen(name) + strlen(ext) + 9);	// save some space for a PID and dot
-	if(log_name == NULL)
-		return -1;
+	char log_name[strlen(name) + strlen(ext) + 9];	// save some space for a PID and dot
 
 	sprintf(log_name, "%s-%d.%s", name, (int) getpid(), ext);
 	#ifdef DEBUG

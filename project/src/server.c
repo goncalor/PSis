@@ -69,17 +69,19 @@ void server(void)
 	pthread_t thread_keybd;
 	pthread_create(&thread_keybd, NULL, server_keyboard, NULL);
 
+	int aux_fd;
 
 	while(1)
 	{
 		// accepts 
+		aux_fd = TCPaccept(TCPfd_global);
 		newfd = malloc(sizeof(int));
 		if(newfd == NULL)
 		{
 			perror("allocation for an incoming connection file descriptor");
 			exit(EXIT_FAILURE);
 		}
-		*newfd = TCPaccept(TCPfd_global);
+		*newfd = aux_fd;
 		if(*newfd < 0)
 		{
 			perror("TCPaccept() failed");
@@ -279,8 +281,13 @@ void * server_keyboard(void *var)
 				LOGadd(LOGfd_global, log_event_nr++, LOG_STOP);
 				pthread_mutex_unlock(&mutex_log);	// unlock
 
+				close(LOGfd_global);
+
 				CSdestroy(chat_db);
 				CLdestroy(clist);
+
+				free(buf);
+				free(msg);
 
 				pthread_mutex_destroy(&mutex_chatdb);
 				pthread_mutex_destroy(&mutex_clist);

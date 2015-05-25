@@ -151,5 +151,8 @@ void * CRrelauncher_write(void *var)
 void *CRkillzombies(void *args)
 {
 	while(1)
+	{
+		sleep(TIMEOUT);
 		wait(NULL);
+	}
 }

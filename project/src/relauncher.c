@@ -69,6 +69,10 @@ void * relauncher_keyboard(void *var)
 			case CONTROLLER_TO_SERVER__TYPE__QUIT:
 				// clean memory and quit
 				puts("Received QUIT command. Relauncher is closing...");
+
+				free(buf);
+				free(msg);
+
 				exit(EXIT_SUCCESS);
 				break;
 			default:
