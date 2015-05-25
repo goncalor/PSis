@@ -283,11 +283,11 @@ void * server_keyboard(void *var)
 
 				close(LOGfd_global);
 
-				CSdestroy(chat_db);
-				CLdestroy(clist);
-
 				free(buf);
 				free(msg);
+
+				CSdestroy(chat_db);
+				CLdestroy(clist);
 
 				pthread_mutex_destroy(&mutex_chatdb);
 				pthread_mutex_destroy(&mutex_clist);
