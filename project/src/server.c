@@ -109,6 +109,8 @@ void * incoming_connection(void *arg)
 	boolean disc = false;
 	boolean loggedin = false;
 
+	free(arg);
+
 	while(!disc)
 	{
 		buf = NULL;
