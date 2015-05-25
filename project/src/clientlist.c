@@ -11,10 +11,11 @@ typedef struct clientinfo {
 	char *username;
 } clientinfo;
 
-/* returns 0 if the usernames in 'ci1' and 'ci2' are equal */
+/* returns 0 if the usernames in 'ci1' and 'ci2' are equal.
+ * the comparison is case insensitive */
 Item CLcompare(Item ci1, Item ci2)
 {
-	if(strcmp(((clientinfo*)ci1)->username, ((clientinfo*)ci2)->username) == 0)
+	if(strcasecmp(((clientinfo*)ci1)->username, ((clientinfo*)ci2)->username) == 0)
 		return (Item) 0;
 	else
 		return (Item) -1;

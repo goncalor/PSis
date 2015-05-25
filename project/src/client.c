@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 	char command[100];
 	char cmd_str_arg[100];
 	short should_exit = 0, is_logged = 0;
-	unsigned cmd_int_arg1, cmd_int_arg2;
+	int cmd_int_arg1, cmd_int_arg2;
 	unsigned ip = atoh("127.0.0.1");
 	unsigned short port = 3000;
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 			{
 				is_logged = false;
 				close(TCPfd);
-				puts("Connection closed by server");
+				puts("Connection closed by server. You are now logged out");
 			}
 			sleep(1);
 		}
@@ -176,7 +176,10 @@ int main(int argc, char **argv)
 						#ifdef DEBUG
 						printf("Sending QUERY command (%d %d)\n", cmd_int_arg1, cmd_int_arg2);
 						#endif
-						query(TCPfd, cmd_int_arg1, cmd_int_arg2);
+						if(cmd_int_arg1 < 1 || cmd_int_arg2 < 1)
+							puts("QUERY indexes must be equal or greater than 1");
+						else
+							query(TCPfd, cmd_int_arg1, cmd_int_arg2);
 					}
 				}
 				else
@@ -242,16 +245,14 @@ int login(int fd, char *username)
 		return false;
 	}
 
+	int retval = false;
 	msgStC = server_to_client__unpack(NULL, len_received, (uint8_t*) buf);
 	free(buf);
 	if(msgStC->has_code && msgStC->code == SERVER_TO_CLIENT__CODE__OK)
-	{
-		free(msgStC);
-		return true;
-	}
+		retval = true;
 
-	free(msgStC);
-	return false;
+	server_to_client__free_unpacked(msgStC, NULL);
+	return retval;
 }
 
 
@@ -344,8 +345,8 @@ int query(int fd, unsigned first, unsigned last)
 			printf("%d %s\n", first+i, msgStC->str[i]);
 	else
 		puts("No messages in the specified range");
-
-	free(msgStC);
+	
+	server_to_client__free_unpacked(msgStC, NULL);
 	return i;
 }
 
@@ -375,7 +376,7 @@ int receive_chat(int fd)
 		for(i=0; i < msgStC->n_str; i++)
 			puts(msgStC->str[i]);
 
-	free(msgStC);
+	server_to_client__free_unpacked(msgStC, NULL);
 	return 0;
 }
 

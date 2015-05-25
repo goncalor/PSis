@@ -65,7 +65,11 @@ int main(int argc, char **argv)
 
 		if(fgets(comm, SERVER_COMM_LEN, stdin)==NULL)
 		{
+			// Ctrl + D will enter this condition
+			#ifdef DEBUG
 			puts("fgets failed");
+			#endif
+			exit(EXIT_SUCCESS);
 		}
 		else
 		{	

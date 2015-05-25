@@ -391,7 +391,7 @@ void manage_query(int fd, ClientToServer *msg, int loggedin, char *username)
 	if(!msg->has_id_min || !msg->has_id_max)
 		return;
 	pthread_mutex_lock(&mutex_chatdb);	// lock
-	messages = CSquery(chat_db, msg->id_min, msg->id_max);
+	messages = CSquery(chat_db, msg->id_min-1, msg->id_max-1);
 	pthread_mutex_unlock(&mutex_chatdb);	// unlock
 	if(messages == NULL)
 	{
