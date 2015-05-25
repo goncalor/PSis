@@ -9,7 +9,7 @@ message ClientToServer
 	}
 
 	required Type type = 1;	// identify type of message
-	optional string str = 2;	// used for LOGIN (username) and CHAR (string)
+	optional string str = 2;	// used for LOGIN (username) and CHAT (string)
 	optional uint64 id_min = 3;	// used for QUERY
 	optional uint64 id_max = 4;
 }
@@ -22,13 +22,12 @@ message ServerToClient
 	}
 
 	optional Code code = 1;	// used for LOGIN only
-	repeated string str = 2;	// used for QUERY only
+	repeated string str = 2;	// used for QUERY and to receive chats
 }
 
 message ServerToBroadcast
 {
-	required int32 fd = 1;	// the file descriptor of the client who sent the message
-	required string str = 2;	// the message (chat) sent by the client
+	required string str = 1;	// the message (chat) sent by the client
 }
 
 message ControllerToServer

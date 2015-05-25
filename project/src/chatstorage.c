@@ -125,6 +125,7 @@ void CSdestroy(chatdb *db)
 	for(i=0; i < db->nr_messages; i++)
 		free(db->messages[i]);
 
+	free(db->messages);
 	free(db);
 }
 
