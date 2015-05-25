@@ -206,9 +206,7 @@ void * broadcast_chat(void *arg)
 		chat = msg->str;
 
 		#ifdef DEBUG
-		int fd_sender;
-		fd_sender = msg->fd;
-		printf("broadcast fd=%d '%s'\n", fd_sender, chat);
+		printf("broadcast '%s'\n", chat);
 		#endif
 
 		// send message to every client
