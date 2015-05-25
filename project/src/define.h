@@ -11,5 +11,6 @@ int LOGfd_global;
 pthread_mutex_t mutex_clist;
 pthread_mutex_t mutex_chatdb;
 pthread_mutex_t mutex_log;
+pthread_mutex_t mutex_broadcast;
 
 #endif

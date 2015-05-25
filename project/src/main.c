@@ -71,6 +71,11 @@ int main(int argc, char **argv)
 		perror("mutex init log");
 		exit(EXIT_FAILURE);
 	}
+	if(pthread_mutex_init(&mutex_broadcast, NULL) != 0)
+	{
+		perror("mutex init broadcast");
+		exit(EXIT_FAILURE);
+	}
 
 	/* create a socket and listen */
 	TCPfd_global = TCPcreate(INADDR_ANY, port);

@@ -51,6 +51,14 @@ void server(void)
 	/* initialise client list */
 	clist = CLinit();
 
+	/* create thread for keyboard */
+	pthread_t thread_keybd;
+	pthread_create(&thread_keybd, NULL, server_keyboard, NULL);
+
+	/* create thread for broadcast */
+	pthread_t thread_chat_broadcast;
+	pthread_create(&thread_chat_broadcast, NULL, broadcast_chat, NULL);
+
 	// crash recovery thereads
 	pthread_t thread_send_fifo;
 	pthread_create(&thread_send_fifo, NULL, CRserver_write, NULL);
@@ -60,14 +68,6 @@ void server(void)
 
 	pthread_t thread_killzombies;
 	pthread_create(&thread_killzombies, NULL, CRkillzombies, NULL);
-
-	/* create thread for broadcast */
-	pthread_t thread_chat_broadcast;
-	pthread_create(&thread_chat_broadcast, NULL, broadcast_chat, NULL);
-
-	/* create thread for keyboard */
-	pthread_t thread_keybd;
-	pthread_create(&thread_keybd, NULL, server_keyboard, NULL);
 
 	int aux_fd;
 
@@ -289,6 +289,7 @@ void * server_keyboard(void *var)
 				CSdestroy(chat_db);
 				CLdestroy(clist);
 
+				pthread_mutex_destroy(&mutex_broadcast);
 				pthread_mutex_destroy(&mutex_chatdb);
 				pthread_mutex_destroy(&mutex_clist);
 				pthread_mutex_destroy(&mutex_log);
@@ -462,10 +463,12 @@ void manage_chat(int fd, ClientToServer *msg, int loggedin, char *username)
 	}
 
 	server_to_broadcast__pack(&msgStB, (uint8_t*) buf);
+	pthread_mutex_lock(&mutex_broadcast);	// lock
 	if(PROTOsend(fifo_broadcast, (char*) buf, server_to_broadcast__get_packed_size(&msgStB)) != 0)
 	{
 		perror("Failed to send to broadcast task");
 	}
+	pthread_mutex_unlock(&mutex_broadcast);	// unlock
 	free(buf);
 
 	// store chat
