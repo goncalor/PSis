@@ -174,12 +174,13 @@ Os dados guardados são o \textit{username} do cliente e o \textit{file descript
 
 	\subsection{\textit{Race Conditions}}
 
-	A maioria do projeto é baseado na utilização de \textit{threads}, logo é necessário garantir que estas funcionam de forma adequada e com os valores e parâmetros corretos. Sendo assim, o acesso a cada uma das variáveis/estruturas que é partilhada pelas \textit{threads} torna-se numa região critica levando à condição de que esta apenas é modifica e/ou lida por uma e uma só \textit{thread} de cada vez. Para cumprir estes requisitos utiliza-se \textit{mutexes} num total de três, mais especificamente: 
+	A maioria do projeto é baseado na utilização de \textit{threads}, logo é necessário garantir que estas funcionam de forma adequada e com os valores e parâmetros corretos. Sendo assim, o acesso a cada uma das variáveis/estruturas que é partilhada pelas \textit{threads} torna-se numa região critica levando à condição de que esta apenas é modifica e/ou lida por uma e uma só \textit{thread} de cada vez. Para cumprir estes requisitos utiliza-se \textit{mutexes} num total de quatro, mais especificamente: 
 
 	\begin{itemize}
 		\item \texttt{mutex\_clist} : Este \textit{mutex} é utilizado sempre que se acede a uma função relacionada com a lista de clientes (estas funções iniciam o nome com \texttt{CL}) pois é necessário garantir que todas as \textit{threads} acedem à mesma versão da lista de clientes e sem discrepâncias, tornando-se assim uma forma de sincronizar a lista de clientes;  
 		\item \texttt{mutex\_log} : Como existe uma \textit{thread} dedicada a cada cliente, várias \textit{threads} podem registar no log mensagens relativas a esses clientes (como mensagens de login, queries, etc.). Caso mais que uma \textit{thread} aceda ao log simultaneamente o acesso e a escrita ao ficheiro de log pode tornar o mesmo corrompido. Assim utiliza-se este \textit{mutex} sempre que se acede e se escreve no log para evitar tais situações. 
 		\item \texttt{mutex\_chatdb} : No caso da lista de mensagens existe o problema de que vários clientes podem fazer QUERY's ao mesmo tempo que outros fazem CHAT. É preciso tomar o cuidado de que apenas uma \textit{thread} de cada vez pode adicionar uma mensagem e de que enquanto uma está a adicionar uma nova mensagem não pode haver outra a fazer QUERY's das mensagens. Assim, utiliza-se este \textit{mutex} para garantir o acesso de apenas uma \textit{thread}, de modo a evitar comportamentos indesejados.
+        \item \texttt{mutex\_broadcast} : Como as várias \textit{threads} associadas aos clientes tentam escrever para uma mesma FIFO que transporta os chats para a \textit{thread} de \textit{broadcast} e as escritas com a função \texttt{write()} não são atómicas este \textit{mutex} é necessário para garantir que não ocorrem dois \texttt{write()}'s de \textit{threads} distintas em simultâneo.
 	\end{itemize}
 
 
