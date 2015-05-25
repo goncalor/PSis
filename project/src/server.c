@@ -281,6 +281,9 @@ void * server_keyboard(void *var)
 				LOGadd(LOGfd_global, log_event_nr++, LOG_STOP);
 				pthread_mutex_unlock(&mutex_log);	// unlock
 
+				CSdestroy(chat_db);
+				CLdestroy(clist);
+
 				pthread_mutex_destroy(&mutex_chatdb);
 				pthread_mutex_destroy(&mutex_clist);
 				pthread_mutex_destroy(&mutex_log);
@@ -444,7 +447,7 @@ void manage_chat(int fd, ClientToServer *msg, int loggedin, char *username)
 	sprintf(chat_to_store, "%s: %s", username, chat);
 
 	// send to the broadcast task
-	msgStB.fd = fd;
+	//msgStB.fd = fd;
 	msgStB.str = chat_to_store;
 	buf = malloc(server_to_broadcast__get_packed_size(&msgStB));
 	if(buf == NULL)
